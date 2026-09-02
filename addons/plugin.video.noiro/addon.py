@@ -99,6 +99,11 @@ def home():
     list_item("Search", url("search"), folder=True)
     list_item("Library", url("library"), folder=True)
     list_item("Add-ons", url("addons"), folder=True)
+    try:
+        pro = request("pro.status")
+        list_item("Noiro Pro · %s" % ("PRO" if pro.get("pro") else "Free"), url("open_pro"), folder=False)
+    except RpcError:
+        list_item("Noiro Pro · Free", url("open_pro"), folder=False)
     list_item("Settings", url("open_settings"), folder=False)
     try:
         for row in request("stremio.catalogs"):
@@ -325,6 +330,11 @@ def open_settings():
     xbmcplugin.endOfDirectory(HANDLE)
 
 
+def open_pro():
+    xbmc.executebuiltin("RunAddon(script.noiro.setup,?action=pro)")
+    xbmcplugin.endOfDirectory(HANDLE)
+
+
 def main():
     values = query()
     action = values.get("action") or "home"
@@ -343,6 +353,7 @@ def main():
         "remove_addon": lambda: remove_addon(values),
         "restore_addons": lambda: restore_addons(),
         "open_settings": lambda: open_settings(),
+        "open_pro": lambda: open_pro(),
     }
     try:
         routes.get(action, routes["home"])()

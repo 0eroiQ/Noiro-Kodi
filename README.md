@@ -44,7 +44,10 @@ matches the OSMC recovery userland. The Apple Noiro repository is not modified.
 
 See [architecture](docs/ARCHITECTURE.md), [security](docs/SECURITY.md), the
 [Vero installation guide](docs/VERO_INSTALL.md), and the separate
-[physical acceptance gates](docs/ACCEPTANCE.md).
+[physical acceptance gates](docs/ACCEPTANCE.md). The separate
+[Noiro Pro contract](docs/PRO.md) documents device linking, signed
+entitlements, the no-payment local test server and the production billing
+boundary.
 
 ## Signed public updates
 
@@ -60,5 +63,5 @@ build instructions, license notices and artifact checksums.
 commit recorded in `native/upstream-core.json`, so the corresponding-source
 archive does not depend on a future GitHub checkout remaining available.
 
-Version 0.1.2 is an installable alpha. Automated checks and the armhf ABI gate
+Version 0.2.0 is an installable alpha. Automated checks and the armhf ABI gate
 are complete; the physical Vero acceptance checklist remains a separate gate.

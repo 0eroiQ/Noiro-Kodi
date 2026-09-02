@@ -12,4 +12,7 @@ they do not claim hardware acceptance. On the real Vero 4K+, record each gate:
 - Gemini translation cache and immediate original-subtitle fallback;
 - update confirmation, reboot health confirmation and forced rollback test;
 - Maintenance PIN, persistent Estuary reboot, OSMC update and Return to Noiro;
+- Pro device link pending/expiry/success, signed device binding and Free fallback
+  after logout, expiry or account-server outage;
+- Pro linking never changes any profile's Stremio token, Library or progress;
 - no bootloader, partition or OSMC-image write.

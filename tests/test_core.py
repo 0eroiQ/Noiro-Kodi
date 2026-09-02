@@ -5,6 +5,7 @@ import tempfile
 import threading
 import time
 import unittest
+import base64
 from pathlib import Path
 
 
@@ -13,6 +14,7 @@ sys.path.insert(0, str(ROOT / "addons/script.module.noiro/lib"))
 
 from noiro.backend import NoiroBackend  # noqa: E402
 from noiro.models import LinkSession  # noqa: E402
+from noiro.pro import ProClient, ProError, canonical_json, validate_base_url, verify_entitlement  # noqa: E402
 from noiro.rpc import JsonRpcClient, JsonRpcServer, RpcError  # noqa: E402
 from noiro.security import SecretStore, hash_pin, verify_pin  # noqa: E402
 from noiro.state import StateStore  # noqa: E402
@@ -70,6 +72,59 @@ class FakeStremio(object):
         return True
 
 
+class FakePro(object):
+    def __init__(self):
+        self.device_id = None
+        self.polls = 0
+        self.access_token = None
+
+    def create_link(self, device_id, device_name="Vero 4K+"):
+        self.device_id = device_id
+        return {
+            "device_code": "device-code",
+            "user_code": "ABCD-1234",
+            "verification_uri": "https://account.example.test/activate",
+            "verification_uri_complete": "https://account.example.test/activate/ABCD-1234",
+            "expires_at": time.time() + 300,
+            "poll_interval": 2,
+        }
+
+    def poll_link(self, _device_code):
+        self.polls += 1
+        if self.polls == 1:
+            return {"status": "pending", "code": 101}
+        return {"status": "linked", "access_token": "pro-access-token"}
+
+    def entitlement(self):
+        now = int(time.time())
+        return {
+            "schema": 1,
+            "payload": {
+                "account_id": "acct_test",
+                "device_id": self.device_id,
+                "expires_at": now + 3600,
+                "features": ["pro_badge"],
+                "issued_at": now,
+                "plan": "pro",
+            },
+            "signature": base64.b64encode(b"test-signature").decode("ascii"),
+        }
+
+
+class FakeHttpResponse(object):
+    def __init__(self, payload):
+        self.payload = json.dumps(payload).encode("utf-8")
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *_args):
+        return False
+
+    def read(self):
+        return self.payload
+
+
 class CoreTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
@@ -92,6 +147,73 @@ class CoreTests(unittest.TestCase):
         store.set("token", "private")
         self.assertEqual(store.get("token"), "private")
         self.assertEqual(os.stat(path).st_mode & 0o777, 0o600)
+
+    def test_entitlement_is_device_bound_signed_and_expiring(self):
+        now = 1_800_000_000
+        payload = {
+            "account_id": "acct_1",
+            "device_id": "vero-1",
+            "expires_at": now + 3600,
+            "features": ["pro_badge"],
+            "issued_at": now - 10,
+            "plan": "pro",
+        }
+        expected = canonical_json(payload)
+        envelope = {
+            "schema": 1,
+            "payload": dict(payload),
+            "signature": base64.b64encode(b"valid").decode("ascii"),
+        }
+        verifier = lambda message, signature, _key: message == expected and signature == b"valid"
+        verified = verify_entitlement(envelope, {}, "vero-1", now=now, verifier=verifier)
+        self.assertTrue(verified["pro"])
+        envelope["payload"]["plan"] = "free"
+        with self.assertRaises(ProError):
+            verify_entitlement(envelope, {}, "vero-1", now=now, verifier=verifier)
+        envelope["payload"] = dict(payload)
+        with self.assertRaises(ProError):
+            verify_entitlement(envelope, {}, "another-vero", now=now, verifier=verifier)
+        with self.assertRaises(ProError):
+            verify_entitlement(envelope, {}, "vero-1", now=now + 7200, verifier=verifier)
+
+    def test_pro_client_keeps_bearer_token_in_authorization_header(self):
+        captured = []
+
+        def opener(request, timeout=None):
+            captured.append(request)
+            return FakeHttpResponse({"schema": 1, "payload": {}, "signature": "x"})
+
+        client = ProClient("https://account.example.test", access_token="secret-token", opener=opener)
+        client.entitlement()
+        self.assertEqual(captured[0].get_header("Authorization"), "Bearer secret-token")
+        self.assertNotIn("secret-token", captured[0].full_url)
+        self.assertEqual(validate_base_url("http://192.168.4.2:8098"), "http://192.168.4.2:8098")
+        with self.assertRaises(ProError):
+            validate_base_url("http://account.example.test")
+
+    def test_pro_link_does_not_change_profile_stremio_token(self):
+        fake_pro = FakePro()
+        public_key = os.path.join(self.temp.name, "pro-public.json")
+        Path(public_key).write_text("{}", encoding="utf-8")
+        backend = NoiroBackend(
+            self.temp.name,
+            stremio=self.fake,
+            pro=fake_pro,
+            pro_public_key_path=public_key,
+            pro_verifier=lambda _message, signature, _key: signature == b"test-signature",
+        )
+        profile = backend.dispatch("profiles.create", {"name": "Viewer"})
+        backend.profiles.set_auth_key(profile["id"], "stremio-token")
+        backend.dispatch("pro.configure", {"base_url": "https://account.example.test"})
+        backend.dispatch("pro.link.create", {})
+        self.assertEqual(backend.dispatch("pro.link.poll", {})["code"], 101)
+        linked = backend.dispatch("pro.link.poll", {})
+        self.assertEqual(linked["status"], "linked")
+        self.assertTrue(backend.dispatch("pro.status", {})["pro"])
+        self.assertEqual(backend.profiles.auth_key(profile["id"]), "stremio-token")
+        backend.dispatch("pro.logout", {})
+        self.assertFalse(backend.dispatch("pro.status", {})["pro"])
+        self.assertEqual(backend.profiles.auth_key(profile["id"]), "stremio-token")
 
     def test_profiles_never_share_stremio_tokens(self):
         first = self.backend.dispatch("profiles.create", {"name": "Alice"})

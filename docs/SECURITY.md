@@ -12,6 +12,10 @@
   use a public or guest Wi-Fi network for this step.
 - Releases use RSA-3072 PKCS#1 v1.5 SHA-256 signatures and per-file SHA-256.
   Verification occurs before a ZIP is exposed to Kodi or staged for update.
+- Pro entitlements use a second RSA-3072 key. They are device-bound and
+  expiring, and the bearer token is sent only in an Authorization header. The
+  release private key and Pro private key are never included in Git or release
+  artifacts.
 - ZIP extraction rejects absolute paths, traversal and symbolic links.
 - Add-on roster installation/removal requires an explicit confirmation and
   preserves the previous account roster for rollback.

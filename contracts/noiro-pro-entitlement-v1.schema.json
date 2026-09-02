@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://noiro.local/contracts/noiro-pro-entitlement-v1.schema.json",
+  "title": "Noiro Pro signed entitlement v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "payload", "signature"],
+  "properties": {
+    "schema": { "const": 1 },
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["account_id", "device_id", "plan", "features", "issued_at", "expires_at"],
+      "properties": {
+        "account_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "device_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "plan": { "enum": ["free", "pro"] },
+        "features": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1, "maxLength": 64 }
+        },
+        "issued_at": { "type": "integer", "minimum": 1 },
+        "expires_at": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "signature": { "type": "string", "contentEncoding": "base64" }
+  }
+}

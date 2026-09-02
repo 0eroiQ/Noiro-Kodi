@@ -5,6 +5,7 @@ import time
 import uuid
 
 from .paths import engine_socket_path, service_data
+from .pro import EntitlementStore, ProClient, ProError, validate_base_url
 from .profiles import ProfileStore
 from .rpc import JsonRpcClient, RpcError
 from .security import SecretStore, _atomic_json_write, hash_pin, verify_pin
@@ -15,13 +16,28 @@ from .translation import GeminiTranslator
 
 
 class NoiroBackend(object):
-    def __init__(self, data_dir=None, stremio=None):
+    def __init__(self, data_dir=None, stremio=None, pro=None, pro_public_key_path=None, pro_verifier=None):
         self.data_dir = data_dir or service_data()
         os.makedirs(self.data_dir, mode=0o700, exist_ok=True)
         self.secrets = SecretStore(os.path.join(self.data_dir, "secrets.json"))
         self.profiles = ProfileStore(os.path.join(self.data_dir, "profiles.json"), self.secrets)
         self.state = StateStore(os.path.join(self.data_dir, "state.json"))
         self.stremio = stremio or StremioClient()
+        self.pro_override = pro
+        self.pro_device_id = self.secrets.get("pro_device_id")
+        if not self.pro_device_id:
+            self.pro_device_id = str(uuid.uuid4())
+            self.secrets.set("pro_device_id", self.pro_device_id)
+        module_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+        entitlement_args = [
+            os.path.join(self.data_dir, "pro-entitlement.json"),
+            pro_public_key_path or os.path.join(module_root, "resources", "pro_public_key.json"),
+            self.pro_device_id,
+        ]
+        if pro_verifier is not None:
+            entitlement_args.append(pro_verifier)
+        self.pro_entitlements = EntitlementStore(*entitlement_args)
+        self.pro_link_session = None
         self.link_sessions = {}
         self.subtitle_cache = SubtitleCache(os.path.join(self.data_dir, "subtitles"))
         self.subtitle_jobs = {}
@@ -74,6 +90,12 @@ class NoiroBackend(object):
             "system.set_maintenance_pin": self.system_set_maintenance_pin,
             "system.verify_maintenance_pin": self.system_verify_maintenance_pin,
             "system.confirm_boot": self.system_confirm_boot,
+            "pro.status": self.pro_status,
+            "pro.configure": self.pro_configure,
+            "pro.link.create": self.pro_link_create,
+            "pro.link.poll": self.pro_link_poll,
+            "pro.refresh": self.pro_refresh,
+            "pro.logout": self.pro_logout,
             "profiles.list": self.profiles_list,
             "profiles.create": self.profiles_create,
             "profiles.activate": self.profiles_activate,
@@ -111,7 +133,7 @@ class NoiroBackend(object):
         return {
             "ready": profile_store,
             "protocol": 1,
-            "service": "0.1.2",
+            "service": "0.2.0",
             "profile_store": profile_store,
             "profile_count": len(self.profiles.list()),
             "maintenance_mode": bool(state.get("maintenance_mode")),
@@ -139,6 +161,102 @@ class NoiroBackend(object):
 
     def system_confirm_boot(self, _params):
         return self.state.confirm_boot()
+
+    def _pro_client(self, access_token=None):
+        if self.pro_override is not None:
+            if access_token is not None:
+                self.pro_override.access_token = access_token
+            return self.pro_override
+        endpoint = self.secrets.get("pro_base_url")
+        if not endpoint:
+            raise ProError("Noiro Pro is not configured yet")
+        return ProClient(endpoint, access_token=access_token)
+
+    def _free_pro_status(self, reason=None):
+        return {
+            "configured": bool(self.pro_override is not None or self.secrets.get("pro_base_url")),
+            "linked": bool(self.secrets.get("pro_access_token")),
+            "device_id": self.pro_device_id,
+            "plan": "free",
+            "pro": False,
+            "features": [],
+            "account_id": None,
+            "expires_at": None,
+            "reason": reason,
+        }
+
+    def pro_status(self, _params):
+        status = self._free_pro_status()
+        try:
+            entitlement = self.pro_entitlements.read()
+        except ProError as error:
+            status["reason"] = str(error)
+            return status
+        if not entitlement:
+            return status
+        status.update(entitlement)
+        status["configured"] = True
+        status["linked"] = bool(self.secrets.get("pro_access_token"))
+        status["reason"] = None
+        return status
+
+    def pro_configure(self, params):
+        endpoint = validate_base_url(params.get("base_url"))
+        previous = self.secrets.get("pro_base_url")
+        if previous and previous != endpoint:
+            self.secrets.set("pro_access_token", None)
+            self.pro_entitlements.clear()
+            self.pro_link_session = None
+        self.secrets.set("pro_base_url", endpoint)
+        status = self._free_pro_status()
+        status["base_url"] = endpoint
+        return status
+
+    def pro_link_create(self, _params):
+        session = self._pro_client().create_link(self.pro_device_id)
+        self.pro_link_session = session
+        return session
+
+    def pro_link_poll(self, _params):
+        session = self.pro_link_session
+        if not session:
+            raise ProError("No Noiro account link is active")
+        if time.time() >= float(session.get("expires_at") or 0):
+            self.pro_link_session = None
+            return {"status": "expired"}
+        result = self._pro_client().poll_link(session["device_code"])
+        status = result.get("status")
+        if status == "pending":
+            return {
+                "status": "pending",
+                "code": int(result.get("code") or 101),
+                "retry_after": int(session.get("poll_interval") or 2),
+            }
+        if status == "expired":
+            self.pro_link_session = None
+            return {"status": "expired"}
+        if status != "linked" or not result.get("access_token"):
+            raise ProError("Noiro account service returned an invalid link result")
+        token = result["access_token"]
+        envelope = self._pro_client(token).entitlement()
+        entitlement = self.pro_entitlements.save(envelope)
+        self.secrets.set("pro_access_token", token)
+        self.pro_link_session = None
+        return {"status": "linked", "entitlement": entitlement}
+
+    def pro_refresh(self, _params):
+        token = self.secrets.get("pro_access_token")
+        if not token:
+            raise ProError("This Vero is not linked to a Noiro account")
+        envelope = self._pro_client(token).entitlement()
+        entitlement = self.pro_entitlements.save(envelope)
+        return dict(entitlement, configured=True, linked=True, reason=None)
+
+    def pro_logout(self, _params):
+        self.secrets.set("pro_access_token", None)
+        self.pro_entitlements.clear()
+        self.pro_link_session = None
+        return self._free_pro_status()
 
     def profiles_list(self, _params):
         active = self.profiles.active_id()

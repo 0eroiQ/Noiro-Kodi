@@ -32,6 +32,13 @@ native daemon exposes its own v1 socket for core health, dispatch and state;
 this split keeps Kodi/Python lifecycle work out of the native core while still
 making the pinned core a separately supervised component.
 
+Noiro Pro is a separate device-wide account boundary. The public client keeps
+its bearer token in the permission-protected secret store and accepts a plan or
+feature only after verifying a device-bound, expiring server signature with the
+bundled Pro public key. Pro never owns or merges profile Stremio credentials.
+Server-backed premium services must also enforce the bearer entitlement on the
+server; the client-side badge is not treated as a DRM boundary.
+
 The release source includes both the versioned Noiro bridge snapshot and an
 unmodified copy of the exact pinned upstream `stremio-core` commit, together
 with the Debian 11 build container and Rust dependency lock.

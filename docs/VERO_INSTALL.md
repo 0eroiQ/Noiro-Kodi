@@ -17,3 +17,11 @@ hold reset, or write an OSMC partition.
 Choose **Settings → Maintenance**, enter the PIN, and select **Open OSMC/Kodi**.
 Estuary remains active across restarts. In Estuary, **Program add-ons → Return
 to Noiro** performs compatibility and health checks before restoring Noiro.
+
+## Optional Noiro Pro test
+
+Noiro Pro is optional and does not replace Stremio. Open **Noiro Settings →
+Noiro Pro** to view Free/Pro state or connect the device. The local reference
+server described in [PRO.md](PRO.md) issues test entitlements only; it never
+takes a payment. If the service is unavailable, Noiro remains in Free mode and
+normal playback continues.

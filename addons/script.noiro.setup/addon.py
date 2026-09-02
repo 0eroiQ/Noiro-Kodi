@@ -62,6 +62,34 @@ class LinkWindow(xbmcgui.WindowDialog):
             self.close()
 
 
+class ProLinkWindow(xbmcgui.WindowDialog):
+    def __init__(self, session):
+        super().__init__()
+        self.cancelled = False
+        background = xbmcgui.ControlImage(0, 0, 1920, 1080, "", colorDiffuse="FF080B12")
+        title = xbmcgui.ControlLabel(240, 90, 1440, 70, "Connect Noiro account", alignment=2)
+        controls = [background, title]
+        qr_value = session.get("qrcode")
+        if str(qr_value).startswith(("http://", "https://")):
+            controls.append(xbmcgui.ControlImage(740, 210, 440, 440, qr_value))
+            top = 690
+        else:
+            top = 330
+        link = session.get("verification_uri") or ""
+        code = session.get("user_code") or ""
+        controls.append(xbmcgui.ControlLabel(
+            260, top, 1400, 260,
+            "Open on your phone:\n%s\n\nCode: %s\n\nThis code expires in five minutes" % (link, code),
+            alignment=2,
+        ))
+        self.addControls(controls)
+
+    def onAction(self, action):
+        if action.getId() in (9, 10, 92, 216, 247):
+            self.cancelled = True
+            self.close()
+
+
 def link_profile(profile_id):
     try:
         session = call("stremio.link.create", {"profile_id": profile_id})
@@ -91,6 +119,107 @@ def link_profile(profile_id):
     if not window.cancelled:
         DIALOG.ok("Stremio", "The link code expired. Request a new code to try again.")
     return False
+
+
+def configure_pro():
+    if not maintenance_pin():
+        return False
+    address = DIALOG.input(
+        "Noiro account service address",
+        type=xbmcgui.INPUT_ALPHANUM,
+    ).strip()
+    if not address:
+        return False
+    try:
+        call("pro.configure", {"base_url": address})
+        notify("Noiro Pro", "Account service saved")
+        return True
+    except RpcError as error:
+        DIALOG.ok("Noiro Pro", str(error))
+        return False
+
+
+def link_pro():
+    status = call("pro.status")
+    if not status.get("configured") and not configure_pro():
+        return False
+    try:
+        session = call("pro.link.create")
+    except RpcError as error:
+        DIALOG.ok("Noiro Pro", str(error))
+        return False
+    window = ProLinkWindow(session)
+    window.show()
+    monitor = xbmc.Monitor()
+    interval = max(2, int(session.get("poll_interval") or 2))
+    try:
+        deadline = min(float(session.get("expires_at") or 0), time.time() + 300)
+        while time.time() < deadline and not monitor.abortRequested() and not window.cancelled:
+            if monitor.waitForAbort(interval):
+                break
+            result = call("pro.link.poll")
+            if result.get("status") == "linked":
+                window.close()
+                entitlement = result.get("entitlement") or {}
+                plan = str(entitlement.get("plan") or "free").upper()
+                DIALOG.ok("Noiro Pro", "Noiro account connected.\n\nPlan: %s" % plan)
+                return True
+            if result.get("status") == "expired":
+                break
+    except RpcError as error:
+        window.close()
+        DIALOG.ok("Noiro Pro", str(error))
+        return False
+    window.close()
+    if not window.cancelled:
+        DIALOG.ok("Noiro Pro", "The account-link code expired. Request a new code to try again.")
+    return False
+
+
+def pro_menu():
+    status = call("pro.status")
+    plan = "PRO" if status.get("pro") else "FREE"
+    options = ["Status · %s" % plan]
+    actions = ["status"]
+    if status.get("linked"):
+        options.extend(["Refresh membership", "Disconnect Noiro account"])
+        actions.extend(["refresh", "logout"])
+    else:
+        options.append("Connect Noiro account")
+        actions.append("link")
+    options.append("Set account service address")
+    actions.append("configure")
+    selected = DIALOG.select("Noiro Pro", options)
+    if selected < 0:
+        return
+    action = actions[selected]
+    if action == "status":
+        features = status.get("features") or []
+        detail = "Plan: %s\nAccount: %s\nValid until: %s" % (
+            plan,
+            status.get("account_id") or "Not connected",
+            time.strftime("%Y-%m-%d %H:%M", time.localtime(status.get("expires_at")))
+            if status.get("expires_at") else "—",
+        )
+        if features:
+            detail += "\n\nEnabled: " + ", ".join(features)
+        if status.get("reason"):
+            detail += "\n\n" + str(status["reason"])
+        DIALOG.ok("Noiro Pro", detail)
+    elif action == "link":
+        link_pro()
+    elif action == "refresh":
+        try:
+            refreshed = call("pro.refresh")
+            DIALOG.ok("Noiro Pro", "Membership refreshed.\n\nPlan: %s" % str(refreshed.get("plan") or "free").upper())
+        except RpcError as error:
+            DIALOG.ok("Noiro Pro", str(error))
+    elif action == "logout":
+        if DIALOG.yesno("Noiro Pro", "Disconnect this Vero from the Noiro account?"):
+            call("pro.logout")
+            notify("Noiro Pro", "Account disconnected; playback and Free features still work")
+    elif action == "configure":
+        configure_pro()
 
 
 def create_profile():
@@ -262,12 +391,14 @@ def profile_settings():
 
 
 def settings_menu():
-    selected = DIALOG.select("Noiro Settings", ["Profile settings", "Switch profile", "Maintenance"])
+    selected = DIALOG.select("Noiro Settings", ["Noiro Pro", "Profile settings", "Switch profile", "Maintenance"])
     if selected == 0:
-        profile_settings()
+        pro_menu()
     elif selected == 1:
-        select_profile()
+        profile_settings()
     elif selected == 2:
+        select_profile()
+    elif selected == 3:
         maintenance_menu()
 
 
@@ -349,6 +480,8 @@ def main():
             maintenance_menu()
         elif action == "settings":
             settings_menu()
+        elif action == "pro":
+            pro_menu()
         else:
             status = call("system.status")
             if status.get("maintenance_mode"):

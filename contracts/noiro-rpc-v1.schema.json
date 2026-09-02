@@ -13,6 +13,7 @@
           "enum": [
             "system.health", "system.status", "system.set_maintenance", "system.set_enabled",
             "system.set_maintenance_pin", "system.verify_maintenance_pin", "system.confirm_boot",
+            "pro.status", "pro.configure", "pro.link.create", "pro.link.poll", "pro.refresh", "pro.logout",
             "profiles.list", "profiles.create", "profiles.activate", "profiles.delete",
             "profiles.update", "profiles.unlock",
             "stremio.link.create", "stremio.link.poll", "stremio.link.reset",
