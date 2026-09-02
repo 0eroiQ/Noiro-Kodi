@@ -1,1 +1,1 @@
-"""Noiro private Kodi repository bootstrap."""
+"""Noiro signed Kodi repository bootstrap."""
