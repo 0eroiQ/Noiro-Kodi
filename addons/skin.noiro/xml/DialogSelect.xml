@@ -1,16 +1,104 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <window>
 	<defaultcontrol always="true">3</defaultcontrol>
-	<include>Animation_DialogPopupOpenClose</include>
 	<depth>DepthOSD</depth>
 	<controls>
-		<include condition="![Window.IsActive(selectvideoversion) | Window.IsActive(selectvideoextra) | Window.IsActive(gamesaves) | Window.IsActive(gamestretchmode) | Window.IsActive(gamevideofilter) | Window.IsActive(gamevideorotation) | Window.IsActive(ingamesaves)]">DefaultDialogSelectLayout</include>
-		<include condition="Window.IsActive(gamesaves)">GameDialogSelectSaveLayout</include>
-		<include condition="Window.IsActive(gamevideofilter)">GameDialogSelectFilterLayout</include>
-		<include condition="Window.IsActive(gamestretchmode)">GameDialogSelectViewLayout</include>
-		<include condition="Window.IsActive(gamevideorotation)">GameDialogSelectViewLayout</include>
-		<include condition="Window.IsActive(ingamesaves)">GameDialogSelectSaveInGameLayout</include>
-		<include condition="Window.IsActive(selectvideoversion)">VideoSelectLayout</include>
-		<include condition="Window.IsActive(selectvideoextra)">VideoSelectLayout</include>
+		<control type="image">
+			<left>0</left><top>0</top><width>1920</width><height>1080</height>
+			<texture colordiffuse="D8080A13">colors/white.png</texture>
+		</control>
+		<control type="group">
+			<centerleft>50%</centerleft><centertop>50%</centertop><width>1280</width><height>820</height>
+			<animation effect="zoom" start="97" end="100" time="160" tween="cubic" easing="out">WindowOpen</animation>
+			<animation effect="fade" start="0" end="100" time="120">WindowOpen</animation>
+			<control type="image">
+				<left>0</left><top>0</top><width>1280</width><height>820</height>
+				<texture border="30" colordiffuse="NoiroPanel">buttons/dialogbutton-nofo.png</texture>
+			</control>
+			<control type="label" id="1">
+				<left>55</left><top>38</top><width>1170</width><height>70</height>
+				<font>fontNoiroRail</font><textcolor>NoiroText</textcolor><align>center</align><aligny>center</aligny>
+			</control>
+			<control type="list" id="3">
+				<left>48</left><top>125</top><width>920</width><height>620</height>
+				<onup>3</onup><ondown>3</ondown><onleft>9001</onleft><onright>61</onright>
+				<pagecontrol>61</pagecontrol><scrolltime>160</scrolltime>
+				<itemlayout width="920" height="78">
+					<control type="label">
+						<left>30</left><right>30</right><height>78</height><aligny>center</aligny>
+						<font>fontNoiroBody</font><textcolor>NoiroTextSecondary</textcolor><label>$INFO[ListItem.Label]</label>
+					</control>
+				</itemlayout>
+				<focusedlayout width="920" height="78">
+					<control type="image">
+						<left>0</left><top>4</top><width>920</width><height>70</height>
+						<texture border="22" colordiffuse="NoiroSurfaceFocus">buttons/dialogbutton-nofo.png</texture>
+					</control>
+					<control type="label">
+						<left>30</left><right>30</right><height>78</height><aligny>center</aligny><scroll>true</scroll>
+						<font>fontNoiroBody</font><textcolor>NoiroText</textcolor><label>$INFO[ListItem.Label]</label>
+					</control>
+				</focusedlayout>
+			</control>
+			<control type="list" id="6">
+				<left>48</left><top>125</top><width>920</width><height>620</height>
+				<onup>6</onup><ondown>6</ondown><onleft>9001</onleft><onright>61</onright>
+				<pagecontrol>61</pagecontrol><scrolltime>160</scrolltime>
+				<itemlayout width="920" height="112">
+					<control type="image">
+						<left>16</left><top>9</top><width>94</width><height>94</height>
+						<texture background="true" fallback="DefaultVideo.png">$INFO[ListItem.Icon]</texture><aspectratio>keep</aspectratio>
+					</control>
+					<control type="label">
+						<left>135</left><top>13</top><right>25</right><height>46</height>
+						<font>fontNoiroBody</font><textcolor>NoiroText</textcolor><label>$INFO[ListItem.Label]</label>
+					</control>
+					<control type="label">
+						<left>135</left><top>59</top><right>25</right><height>38</height>
+						<font>fontNoiroMeta</font><textcolor>NoiroMuted</textcolor><label>$INFO[ListItem.Label2]</label>
+					</control>
+				</itemlayout>
+				<focusedlayout width="920" height="112">
+					<control type="image">
+						<left>0</left><top>4</top><width>920</width><height>104</height>
+						<texture border="24" colordiffuse="NoiroSurfaceFocus">buttons/dialogbutton-nofo.png</texture>
+					</control>
+					<control type="image">
+						<left>16</left><top>9</top><width>94</width><height>94</height>
+						<texture background="true" fallback="DefaultVideo.png">$INFO[ListItem.Icon]</texture><aspectratio>keep</aspectratio>
+					</control>
+					<control type="label">
+						<left>135</left><top>13</top><right>25</right><height>46</height><scroll>true</scroll>
+						<font>fontNoiroBody</font><textcolor>NoiroText</textcolor><label>$INFO[ListItem.Label]</label>
+					</control>
+					<control type="label">
+						<left>135</left><top>59</top><right>25</right><height>38</height>
+						<font>fontNoiroMeta</font><textcolor>NoiroTextSecondary</textcolor><label>$INFO[ListItem.Label2]</label>
+					</control>
+				</focusedlayout>
+			</control>
+			<control type="scrollbar" id="61">
+				<left>982</left><top>137</top><width>10</width><height>596</height>
+				<onleft condition="Control.IsVisible(3)">3</onleft><onleft condition="Control.IsVisible(6)">6</onleft>
+				<onright>9001</onright><orientation>vertical</orientation>
+			</control>
+			<control type="grouplist" id="9001">
+				<left>1015</left><top>130</top><width>220</width><height>610</height>
+				<orientation>vertical</orientation><itemgap>14</itemgap><onleft>61</onleft><onright>3</onright>
+				<control type="button" id="5">
+					<width>220</width><include>NoiroButton</include><onleft>3</onleft><onright>3</onright>
+				</control>
+				<control type="button" id="8">
+					<width>220</width><include>NoiroButton</include><onleft>3</onleft><onright>3</onright>
+				</control>
+				<control type="button" id="7">
+					<width>220</width><include>NoiroButton</include><label>$LOCALIZE[222]</label><onleft>3</onleft><onright>3</onright>
+				</control>
+			</control>
+			<control type="label">
+				<left>48</left><bottom>28</bottom><width>1150</width><height>34</height>
+				<font>fontNoiroMeta</font><textcolor>NoiroMuted</textcolor><label>BACK  Return</label>
+			</control>
+		</control>
 	</controls>
 </window>

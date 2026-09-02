@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="skin.noiro" name="Noiro" version="0.3.0" provider-name="Noiro">
+<addon id="skin.noiro" name="Noiro" version="0.3.1" provider-name="Noiro">
   <requires>
     <import addon="xbmc.gui" version="5.17.0"/>
-    <import addon="plugin.video.noiro" version="0.3.0"/>
+    <import addon="plugin.video.noiro" version="0.3.1"/>
   </requires>
   <extension point="xbmc.gui.skin" debugging="false">
     <res width="1920" height="1440" aspect="4:3" default="false" folder="xml"/>
@@ -16,7 +16,7 @@
   </extension>
   <extension point="xbmc.addon.metadata">
     <summary lang="en_GB">NoiroTV interface for Kodi 21</summary>
-    <description lang="en_GB">A dark, remote-first Noiro shell built on the complete Kodi 21 Estuary window base for safe OSMC compatibility. Estuary remains available through PIN-protected maintenance mode.</description>
+    <description lang="en_GB">A dark, remote-first Noiro shell with a complete Kodi 21 compatibility base. The official OSMC skin remains available through PIN-protected maintenance mode.</description>
     <platform>linux</platform>
     <license>GPL-3.0-only</license>
     <source>https://github.com/0eroiQ/Noiro-Kodi</source>

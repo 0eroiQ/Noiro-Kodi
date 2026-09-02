@@ -47,7 +47,7 @@ def _persist_skin_setting(skin_id):
     Kodi's JSON-RPC setter changes the live setting but does not save
     guisettings.xml itself. OSMC can restart Kodi before the normal settings
     shutdown path runs, so an otherwise successful skin selection would fall
-    back to Estuary after a reboot. Replace only this one XML value and use an
+    back to the previous skin after a reboot. Replace only this one XML value and use an
     atomic rename so a power loss cannot leave a partial settings file.
     """
     import xbmcvfs  # type: ignore

@@ -10,7 +10,8 @@ experience with Noiro profiles, Stremio account data and a Noiro skin.
 - The first release plays direct and debrid-resolved URLs only.
 - Raw magnet/torrent results are visible but locked.
 - The proprietary Stremio `server.js` is not included.
-- Estuary remains installed and is the recovery/maintenance environment.
+- The official OSMC skin remains installed and is the recovery/maintenance
+  environment.
 
 ## Add-ons
 
@@ -21,7 +22,7 @@ experience with Noiro profiles, Stremio account data and a Noiro skin.
 | `script.service.noiro` | Startup service, engine supervisor and health/rollback control |
 | `plugin.video.noiro` | Home, discovery, search, library, streams and playback routes |
 | `script.noiro.setup` | Profiles, Stremio QR linking and maintenance mode |
-| `script.noiro.return` | Always-visible Return to Noiro entry in Estuary |
+| `script.noiro.return` | Always-visible Return to Noiro entry in the OSMC skin |
 | `skin.noiro` | Remote-first Noiro interface for Kodi 21 |
 
 ## Development
@@ -64,7 +65,8 @@ build instructions, license notices and artifact checksums.
 commit recorded in `native/upstream-core.json`, so the corresponding-source
 archive does not depend on a future GitHub checkout remaining available.
 
-Version 0.3.0 is an installable alpha with an integrated widget-first Home,
-focused artwork hero and hidden support plug-in surface. Automated checks and
-the armhf ABI gate are complete; physical Vero acceptance remains a separate
-gate for every signed update.
+Version 0.3.1 is an installable alpha with an integrated widget-first Home,
+lightweight Noiro details, playback, search and system dialogs, plus an
+official-OSMC-skin maintenance path. Automated checks and the armhf ABI gate
+are complete; physical Vero acceptance remains a separate gate for every
+signed update.

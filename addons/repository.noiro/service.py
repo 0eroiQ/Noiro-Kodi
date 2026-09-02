@@ -210,7 +210,7 @@ def process_control_requests():
                 request = json.load(handle)
             restored = installer().rollback(request.get("backup"))
             os.unlink(rollback_request)
-            xbmcgui.Dialog().notification("Noiro rollback", "Restored %s; restarting in Estuary" % restored, xbmcgui.NOTIFICATION_INFO, 7000)
+            xbmcgui.Dialog().notification("Noiro rollback", "Restored %s; restarting in OSMC" % restored, xbmcgui.NOTIFICATION_INFO, 7000)
             time.sleep(2)
             xbmc.executebuiltin("RestartApp")
         except (OSError, ValueError, InstallError) as error:
@@ -279,7 +279,7 @@ def run():
                 except (OSError, ReleaseError, InstallError) as error:
                     xbmcgui.Dialog().ok(
                         "Noiro setup",
-                        "The signed Noiro package could not be installed. Estuary remains active.\n\n%s" % error,
+                        "The signed Noiro package could not be installed. OSMC remains active.\n\n%s" % error,
                     )
             if (not first_setup_started and time.time() - started_at >= 8
                     and start_first_setup_once()):

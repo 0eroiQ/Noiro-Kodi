@@ -178,6 +178,27 @@ class PublicRepositoryTests(unittest.TestCase):
         self.assertIn('json_rpc("Input.Select")', helper)
         self.assertIn("os.replace(temporary, path)", helper)
 
+    def test_maintenance_uses_the_official_osmc_skin(self):
+        setup = (ROOT / "addons/script.noiro.setup/addon.py").read_text(encoding="utf-8")
+        service = (ROOT / "addons/script.service.noiro/service.py").read_text(encoding="utf-8")
+        self.assertIn('set_skin("skin.osmc")', setup)
+        self.assertIn('set_skin("skin.osmc")', service)
+        self.assertNotIn('set_skin("skin.estuary")', setup)
+        self.assertNotIn('set_skin("skin.estuary")', service)
+
+    def test_lightweight_noiro_system_dialogs_keep_kodi_control_ids(self):
+        select = (ROOT / "addons/skin.noiro/xml/DialogSelect.xml").read_text(encoding="utf-8")
+        confirm = (ROOT / "addons/skin.noiro/xml/DialogConfirm.xml").read_text(encoding="utf-8")
+        notification = (ROOT / "addons/skin.noiro/xml/DialogNotification.xml").read_text(encoding="utf-8")
+        self.assertIn('fontNoiroBody', select)
+        for control_id in ('id="1"', 'id="3"', 'id="6"', 'id="61"'):
+            self.assertIn(control_id, select)
+        for control_id in ('id="1"', 'id="9"', 'id="11"', 'id="10"', 'id="12"'):
+            self.assertIn(control_id, confirm)
+        for control_id in ('id="400"', 'id="401"', 'id="402"'):
+            self.assertIn(control_id, notification)
+        self.assertNotIn("script.cinemavision", notification)
+
 
 class InstallerTests(unittest.TestCase):
     def setUp(self):

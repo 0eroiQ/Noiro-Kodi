@@ -2,8 +2,8 @@
 
 1. Keep the supported OSMC/Kodi 21 installation working.
 2. Copy only `repository.noiro.zip` to a USB drive.
-3. In Estuary, enable installation from unknown sources and choose **Install
-   from zip file**.
+3. In the standard OSMC/Kodi interface, enable installation from unknown
+   sources and choose **Install from zip file**.
 4. Scan the one-time Noiro setup QR. Enter an optional Gemini key and a
    four-digit Maintenance PIN. No GitHub account or token is required.
 5. Noiro verifies the signed public release, installs the remaining packages,
@@ -15,8 +15,9 @@ hold reset, or write an OSMC partition.
 ## Recovery to normal Kodi
 
 Choose **Settings → Maintenance**, enter the PIN, and select **Open OSMC/Kodi**.
-Estuary remains active across restarts. In Estuary, **Program add-ons → Return
-to Noiro** performs compatibility and health checks before restoring Noiro.
+The official OSMC skin remains active across restarts. In that interface,
+**Program add-ons → Return to Noiro** performs compatibility and health checks
+before restoring Noiro.
 
 ## Optional Noiro Pro test
 

@@ -258,7 +258,7 @@ def boot_preflight(backend, monitor):
             and native.get("ready")
             and repository_ready()
         )
-        # The first repository bootstrap is verified while Estuary is still
+        # The first repository bootstrap is verified while OSMC is still
         # active. A skin heartbeat is required only for an already-enabled
         # Noiro installation being updated.
         if pending and state.get("noiro_enabled") and not state.get("maintenance_mode"):
@@ -276,7 +276,7 @@ def boot_preflight(backend, monitor):
             backend.state.update(maintenance_mode=True)
             try:
                 from noiro.kodi import set_skin
-                set_skin("skin.estuary")
+                set_skin("skin.osmc")
             except Exception:
                 pass
             if failed.get("failed_boots", 0) >= 2:
@@ -293,7 +293,7 @@ def boot_preflight(backend, monitor):
 def maybe_open_profile_picker(backend, monitor):
     state = backend.state.read()
     # A pending release must finish its two-boot audit even after the first
-    # failed boot deliberately switches Kodi to Estuary maintenance mode.
+    # failed boot deliberately switches Kodi to OSMC maintenance mode.
     # Otherwise the second boot would return early here and rollback could
     # never be requested.
     if state.get("boot_pending"):

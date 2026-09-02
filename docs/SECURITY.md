@@ -22,7 +22,7 @@
 - Add-on roster installation/removal requires an explicit confirmation and
   preserves the previous account roster for rollback.
 - Update installation is blocked during playback. The previous add-on set is
-  retained, and two failed boots cause rollback in Estuary.
+  retained, and two failed boots cause rollback in the official OSMC skin.
 
 Report private security issues directly to the repository owner; do not attach
 tokens, API keys or Stremio auth keys to an issue.

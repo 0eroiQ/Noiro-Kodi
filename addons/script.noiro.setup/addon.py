@@ -301,8 +301,8 @@ def open_osmc():
     if not maintenance_pin():
         return
     call("system.set_maintenance", {"enabled": True})
-    set_skin("skin.estuary")
-    notify("Noiro Maintenance", "Estuary will remain active through restart and reboot")
+    set_skin("skin.osmc")
+    notify("Noiro Maintenance", "OSMC will remain active through restart and reboot")
     activate("home")
 
 
@@ -329,7 +329,7 @@ def return_noiro():
         set_skin("skin.noiro")
         select_profile(boot=True)
     except (RuntimeError, RpcError) as error:
-        DIALOG.ok("Return to Noiro", "%s\n\nEstuary will remain active." % error)
+        DIALOG.ok("Return to Noiro", "%s\n\nOSMC will remain active." % error)
 
 
 def show_logs():
@@ -382,7 +382,7 @@ def restore_previous():
         json.dump(pending, handle)
     os.chmod(path, 0o600)
     call("system.set_maintenance", {"enabled": True})
-    set_skin("skin.estuary")
+    set_skin("skin.osmc")
     notify("Noiro", "Rollback was queued; reboot the Vero")
 
 
@@ -444,24 +444,24 @@ def maintenance_menu():
         "Reset Stremio Link",
         "Check Noiro Update",
         "Restore Previous Noiro",
-        "Restore Estuary",
+        "Restore OSMC",
     ]
     selected = DIALOG.select("Noiro Maintenance", options)
     if selected == 0:
         call("system.set_maintenance", {"enabled": True})
-        set_skin("skin.estuary")
+        set_skin("skin.osmc")
     elif selected == 1:
         call("system.set_maintenance", {"enabled": True})
-        set_skin("skin.estuary")
+        set_skin("skin.osmc")
         DIALOG.ok("Update OSMC", "Open My OSMC from Program add-ons and choose Updates.")
         activate("programs")
     elif selected == 2:
         call("system.set_maintenance", {"enabled": True})
-        set_skin("skin.estuary")
+        set_skin("skin.osmc")
         activate("addonbrowser")
     elif selected == 3:
         call("system.set_maintenance", {"enabled": True})
-        set_skin("skin.estuary")
+        set_skin("skin.osmc")
         activate("systeminfo")
     elif selected == 4:
         show_logs()
@@ -476,16 +476,16 @@ def maintenance_menu():
         restore_previous()
     elif selected == 8:
         call("system.set_maintenance", {"enabled": True})
-        set_skin("skin.estuary")
+        set_skin("skin.osmc")
 
 
 def first_setup():
     health = call("system.health")
     if not health.get("ready") or not (health.get("native") or {}).get("ready"):
-        DIALOG.ok("Noiro setup", "The native Noiro engine did not pass its health check. Estuary will remain active.")
+        DIALOG.ok("Noiro setup", "The native Noiro engine did not pass its health check. OSMC will remain active.")
         return
     if not skin_runtime_ready():
-        DIALOG.ok("Noiro setup", "The complete Noiro skin package did not pass its file check. Estuary will remain active.")
+        DIALOG.ok("Noiro setup", "The complete Noiro skin package did not pass its file check. OSMC will remain active.")
         return
     profiles = call("profiles.list")
     if not profiles:
