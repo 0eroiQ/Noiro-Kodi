@@ -120,6 +120,14 @@ class PublicRepositoryTests(unittest.TestCase):
         self.assertIn('name="NoiroHomeRail"', includes)
         self.assertIn('name="NoiroHeroFanart"', includes)
 
+    def test_primary_noiro_details_is_lightweight_and_self_contained(self):
+        details = (ROOT / "addons/skin.noiro/xml/DialogVideoInfo.xml").read_text(encoding="utf-8")
+        self.assertIn('<control type="button" id="8">', details)
+        self.assertIn('<control type="button" id="11">', details)
+        self.assertIn("fontNoiroHero", details)
+        for optional_helper in ("script.embuary", "script.cinemavision", "script.skin.helper"):
+            self.assertNotIn(optional_helper, details)
+
     def test_home_widgets_wait_for_service_during_cold_boot(self):
         plugin = (ROOT / "addons/plugin.video.noiro/addon.py").read_text(encoding="utf-8")
         self.assertIn("TRANSIENT_RPC_MARKERS", plugin)
