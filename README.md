@@ -16,7 +16,7 @@ experience with Noiro profiles, Stremio account data and a Noiro skin.
 
 | Add-on | Purpose |
 | --- | --- |
-| `repository.noiro` | Bootstrap, authenticated GitHub proxy and release verification |
+| `repository.noiro` | Bootstrap, local GitHub proxy and signed-release verification |
 | `script.module.noiro` | Shared Python API, storage and security primitives |
 | `script.service.noiro` | Startup service, engine supervisor and health/rollback control |
 | `plugin.video.noiro` | Home, discovery, search, library, streams and playback routes |
@@ -46,11 +46,12 @@ See [architecture](docs/ARCHITECTURE.md), [security](docs/SECURITY.md), the
 [Vero installation guide](docs/VERO_INSTALL.md), and the separate
 [physical acceptance gates](docs/ACCEPTANCE.md).
 
-## Private updates
+## Signed public updates
 
-The bootstrap asks for a fine-grained GitHub token restricted to this one
-repository with **Contents: read**. It is stored only in Kodi's private add-on
-data directory with mode `0600`, never placed in URLs and never written to logs.
+The public repository and release assets require no GitHub account or token.
+Every release is still accepted only after RSA signature, Kodi compatibility
+and per-file SHA-256 verification. Kodi reaches the repository through a local
+loopback proxy, and setup keeps only the optional Gemini key and Maintenance PIN.
 
 Binary releases must include the exact corresponding source, dependency lock,
 build instructions, license notices and artifact checksums.
@@ -59,5 +60,5 @@ build instructions, license notices and artifact checksums.
 commit recorded in `native/upstream-core.json`, so the corresponding-source
 archive does not depend on a future GitHub checkout remaining available.
 
-Version 0.1.0 is an installable alpha. Automated checks and the armhf ABI gate
+Version 0.1.1 is an installable alpha. Automated checks and the armhf ABI gate
 are complete; the physical Vero acceptance checklist remains a separate gate.

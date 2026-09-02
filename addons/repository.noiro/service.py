@@ -29,12 +29,31 @@ from noiro_repo.security import atomic_json  # noqa: E402
 PUBLIC_KEY = os.path.join(ROOT, "resources", "public_key.json")
 
 
-def read_credentials():
+def read_json(name):
     try:
-        with open(os.path.join(DATA, "credentials.json"), "r", encoding="utf-8") as handle:
+        with open(os.path.join(DATA, name), "r", encoding="utf-8") as handle:
             return json.load(handle)
     except (OSError, ValueError):
         return {}
+
+
+def is_configured():
+    configured = read_json("configured.json")
+    if configured.get("configured"):
+        return True
+    legacy_path = os.path.join(DATA, "credentials.json")
+    if read_json("credentials.json").get("github_token"):
+        atomic_json(os.path.join(DATA, "configured.json"), {
+            "configured": True,
+            "schema": 1,
+            "migrated_from_private_repository": True,
+        })
+        try:
+            os.unlink(legacy_path)
+        except OSError:
+            pass
+        return True
+    return False
 
 
 class RepositoryProxy(object):
@@ -44,10 +63,7 @@ class RepositoryProxy(object):
         self.thread = None
 
     def client(self):
-        token = read_credentials().get("github_token")
-        if not token:
-            raise ReleaseError("Noiro repository is not configured")
-        return GitHubReleaseClient(token, os.path.join(DATA, "cache"), PUBLIC_KEY)
+        return GitHubReleaseClient(None, os.path.join(DATA, "cache"), PUBLIC_KEY)
 
     def start(self):
         owner = self
@@ -117,15 +133,12 @@ def after_configured():
             time.sleep(2)
     xbmcgui.Dialog().ok(
         "Noiro setup",
-        "Kodi could not finish installing the private Noiro packages. Estuary remains active; open Noiro Repository and retry.",
+        "Kodi could not finish installing the signed Noiro packages. Estuary remains active; open Noiro Repository and retry.",
     )
 
 
 def repository_client():
-    token = read_credentials().get("github_token")
-    if not token:
-        raise ReleaseError("Noiro repository is not configured")
-    return GitHubReleaseClient(token, os.path.join(DATA, "cache"), PUBLIC_KEY)
+    return GitHubReleaseClient(None, os.path.join(DATA, "cache"), PUBLIC_KEY)
 
 
 def state_path():
@@ -201,7 +214,7 @@ def run():
     proxy.start()
     bootstrap = None
     setup_window = None
-    if not read_credentials().get("github_token"):
+    if not is_configured():
         bootstrap = BootstrapServer(DATA, PUBLIC_KEY, on_configured=after_configured)
         bootstrap.start()
         setup_window = show_setup(bootstrap.url)
@@ -209,10 +222,10 @@ def run():
     next_release_check = 0
     try:
         while not monitor.waitForAbort(2):
-            if setup_window and read_credentials().get("github_token"):
+            if setup_window and is_configured():
                 setup_window.close()
                 setup_window = None
-            if read_credentials().get("github_token") and time.time() >= next_release_check:
+            if time.time() >= next_release_check:
                 try:
                     refresh_available_update()
                 except ReleaseError:

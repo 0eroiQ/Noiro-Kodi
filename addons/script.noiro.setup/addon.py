@@ -191,7 +191,7 @@ def check_update():
             available = json.load(handle)
     except (OSError, ValueError):
         xbmc.executebuiltin("UpdateAddonRepos")
-        DIALOG.ok("Noiro Update", "The private repository is still checking for releases. Try again shortly.")
+        DIALOG.ok("Noiro Update", "The Noiro repository is still checking for signed releases. Try again shortly.")
         return
     if available.get("up_to_date") or available.get("current") == available.get("available"):
         DIALOG.ok("Noiro Update", "Noiro %s is up to date." % available.get("current"))

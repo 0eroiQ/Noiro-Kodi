@@ -69,17 +69,19 @@ class BootstrapServer(object):
                 try:
                     length = min(int(self.headers.get("Content-Length", "0")), 32768)
                     form = urllib.parse.parse_qs(self.rfile.read(length).decode("utf-8"), keep_blank_values=True)
-                    token = (form.get("github_token") or [""])[0].strip()
                     gemini = (form.get("gemini_api_key") or [""])[0].strip()
                     pin = (form.get("maintenance_pin") or [""])[0].strip()
-                    client = GitHubReleaseClient(token, os.path.join(owner.data_dir, "cache"), owner.public_key_path)
-                    if not token or not client.validate_token():
-                        raise ValueError("That token cannot read the private 0eroiQ/Noiro-Kodi repository")
+                    client = GitHubReleaseClient(None, os.path.join(owner.data_dir, "cache"), owner.public_key_path)
+                    if not client.validate_repository():
+                        raise ValueError("The public 0eroiQ/Noiro-Kodi repository is unavailable")
                     pin_hash = hash_pin(pin)
-                    atomic_json(os.path.join(owner.data_dir, "credentials.json"), {"github_token": token})
                     atomic_json(os.path.join(owner.data_dir, "provisioning.json"), {
                         "gemini_api_key": gemini or None,
                         "maintenance_pin_hash": pin_hash,
+                    })
+                    atomic_json(os.path.join(owner.data_dir, "configured.json"), {
+                        "configured": True,
+                        "schema": 1,
                     })
                     owner.nonce = secrets.token_urlsafe(24)
                     self._respond(200, owner.success())
@@ -105,11 +107,10 @@ class BootstrapServer(object):
         return """<!doctype html><html><head><meta name='viewport' content='width=device-width'>
 <title>Noiro setup</title><style>body{background:#080b12;color:#fff;font-family:-apple-system,sans-serif;max-width:620px;margin:40px auto;padding:20px}input{box-sizing:border-box;width:100%%;padding:14px;margin:8px 0 18px;background:#151a25;color:white;border:1px solid #394157;border-radius:9px}button{padding:14px 22px;background:#8f7cff;color:#fff;border:0;border-radius:9px;font-weight:700}.error{color:#ff8c8c}</style></head><body>
 <h1>NoiroTV setup</h1><p>These values are sent only across your local network to this Vero.</p>%s
-<form method='post'><label>GitHub fine-grained token (Contents: read)</label><input type='password' name='github_token' required autocomplete='off'>
-<label>Gemini API key (optional)</label><input type='password' name='gemini_api_key' autocomplete='off'>
+<form method='post'><label>Gemini API key (optional)</label><input type='password' name='gemini_api_key' autocomplete='off'>
 <label>Four-digit Maintenance PIN</label><input type='password' name='maintenance_pin' pattern='[0-9]{4}' inputmode='numeric' required autocomplete='off'>
 <button type='submit'>Set up NoiroTV</button></form></body></html>""" % message
 
     @staticmethod
     def success():
-        return """<!doctype html><html><head><meta name='viewport' content='width=device-width'><title>Noiro ready</title></head><body style='background:#080b12;color:white;font-family:sans-serif;text-align:center;padding:60px'><h1>NoiroTV is connected</h1><p>You can return to the television. Kodi is refreshing the private repository.</p></body></html>"""
+        return """<!doctype html><html><head><meta name='viewport' content='width=device-width'><title>Noiro ready</title></head><body style='background:#080b12;color:white;font-family:sans-serif;text-align:center;padding:60px'><h1>NoiroTV is connected</h1><p>You can return to the television. Kodi is verifying the signed Noiro release.</p></body></html>"""

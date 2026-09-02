@@ -1,10 +1,10 @@
-name: Signed private release
+name: Signed public release
 
 on:
   workflow_dispatch:
     inputs:
       tag:
-        description: Release tag, for example v0.1.0
+        description: Release tag, for example v0.1.1
         required: true
 
 permissions:
@@ -30,7 +30,7 @@ jobs:
           printf '%s' "$NOIRO_RELEASE_PRIVATE_KEY" > /tmp/noiro-release-private.pem
           python3 scripts/sign_release.py --private-key /tmp/noiro-release-private.pem
       - run: python3 scripts/verify_release.py --require-signature
-      - name: Create private repository release
+      - name: Create signed repository release
         env:
           GH_TOKEN: ${{ github.token }}
         run: >-

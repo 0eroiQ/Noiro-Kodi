@@ -1,11 +1,11 @@
 # Security model
 
-- The GitHub fine-grained token is restricted to `0eroiQ/Noiro-Kodi` with
-  `Contents: read` and is sent only in an `Authorization` header.
-- GitHub, Gemini and Stremio secrets are redacted from Noiro logs. OSMC has no
+- GitHub downloads are anonymous because `0eroiQ/Noiro-Kodi` is public. No
+  GitHub token is requested, stored, placed in a URL or sent in a header.
+- Gemini and Stremio secrets are redacted from Noiro logs. OSMC has no
   hardware keychain, so local secret files are honestly described as
   permission-protected rather than hardware-encrypted; they use mode `0600`.
-- The private GitHub proxy binds to `127.0.0.1`. The first setup listener is a
+- The GitHub repository proxy binds to `127.0.0.1`. The first setup listener is a
   temporary LAN page protected by a high-entropy, one-time path and closes
   after provisioning. Because this first alpha uses local HTTP rather than a
   trusted device certificate, provision only on a private trusted LAN; never

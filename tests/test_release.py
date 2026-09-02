@@ -13,6 +13,8 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "addons/repository.noiro/resources/lib"))
 
 from noiro_repo.installer import InstallError, TransactionalInstaller  # noqa: E402
+from noiro_repo.bootstrap import BootstrapServer  # noqa: E402
+from noiro_repo.github import GitHubReleaseClient  # noqa: E402
 
 
 def addon_zip(addon_id, marker, unsafe=False):
@@ -42,6 +44,42 @@ class FakeRelease(object):
     def asset(self, name):
         addon_id = name.rsplit("-0.2.0.zip", 1)[0]
         return self.payloads[addon_id]
+
+
+class FakeResponse(object):
+    def __init__(self, payload):
+        self.payload = payload
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *_args):
+        return False
+
+    def read(self):
+        return self.payload
+
+
+class PublicRepositoryTests(unittest.TestCase):
+    def test_public_repository_request_has_no_authorization_header(self):
+        captured = []
+
+        def opener(request, timeout=None):
+            captured.append(request)
+            return FakeResponse(json.dumps({
+                "full_name": "0eroiQ/Noiro-Kodi",
+                "private": False,
+            }).encode("utf-8"))
+
+        client = GitHubReleaseClient(None, "/tmp/noiro-test-cache", "/tmp/noiro-public-key", opener=opener)
+        self.assertTrue(client.validate_repository())
+        self.assertIsNone(captured[0].get_header("Authorization"))
+
+    def test_bootstrap_form_does_not_request_github_token(self):
+        form = BootstrapServer.form()
+        self.assertNotIn("github_token", form)
+        self.assertNotIn("fine-grained", form)
+        self.assertIn("Maintenance PIN", form)
 
 
 class InstallerTests(unittest.TestCase):

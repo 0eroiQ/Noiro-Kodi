@@ -4,10 +4,9 @@
 2. Copy only `repository.noiro.zip` to a USB drive.
 3. In Estuary, enable installation from unknown sources and choose **Install
    from zip file**.
-4. Scan the one-time Noiro setup QR. Enter a fine-grained GitHub token scoped
-   only to this private repository, an optional Gemini key, and a four-digit
-   Maintenance PIN.
-5. Noiro verifies the signed private release, installs the remaining packages,
+4. Scan the one-time Noiro setup QR. Enter an optional Gemini key and a
+   four-digit Maintenance PIN. No GitHub account or token is required.
+5. Noiro verifies the signed public release, installs the remaining packages,
    performs its health check, and only then activates the Noiro skin.
 
 The first release intentionally never asks to flash an image, open recovery,

@@ -26,25 +26,27 @@ class GitHubReleaseClient(object):
         self.manifest = None
 
     def _request(self, url, accept="application/vnd.github+json"):
+        headers = {
+            "Accept": accept,
+            "X-GitHub-Api-Version": "2022-11-28",
+            "User-Agent": "Noiro-Kodi/0.1.1",
+        }
+        if self.token:
+            headers["Authorization"] = "Bearer %s" % self.token
         request = urllib.request.Request(
             url,
-            headers={
-                "Accept": accept,
-                "Authorization": "Bearer %s" % self.token,
-                "X-GitHub-Api-Version": "2022-11-28",
-                "User-Agent": "Noiro-Kodi/0.1",
-            },
+            headers=headers,
         )
         try:
             with self.opener(request, timeout=self.timeout) as response:
                 return response.read()
         except (urllib.error.URLError, OSError) as error:
-            raise ReleaseError("Private release request failed: %s" % error)
+            raise ReleaseError("Release request failed: %s" % error)
 
-    def validate_token(self):
+    def validate_repository(self):
         raw = self._request(self.API)
         payload = json.loads(raw.decode("utf-8"))
-        return payload.get("full_name") == "0eroiQ/Noiro-Kodi" and bool(payload.get("private"))
+        return payload.get("full_name") == "0eroiQ/Noiro-Kodi" and not bool(payload.get("private"))
 
     def load_latest(self, force=False):
         if self.release and self.manifest and not force:
