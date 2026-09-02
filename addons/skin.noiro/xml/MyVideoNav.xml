@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<window>
+  <defaultcontrol always="true">50</defaultcontrol>
+  <onload>SetProperty(Noiro.SkinHeartbeat,1,home)</onload>
+  <onunload>ClearProperty(Noiro.Busy,home)</onunload>
+  <onunload>ClearProperty(Noiro.SkinHeartbeat,home)</onunload>
+  <controls>
+    <include>NoiroBackground</include>
+    <include>NoiroHeader</include>
+    <control type="label">
+      <left>90</left><top>150</top><width>1500</width><height>65</height>
+      <font>font20</font><textcolor>NoiroText</textcolor><label>$INFO[Container.PluginCategory]</label>
+    </control>
+    <control type="panel" id="50">
+      <left>75</left><top>235</top><width>1770</width><height>770</height>
+      <onleft>50</onleft><onright>50</onright><onup>50</onup><ondown>50</ondown>
+      <pagecontrol>60</pagecontrol><orientation>vertical</orientation>
+      <itemlayout width="265" height="445"><include>NoiroPosterItem</include></itemlayout>
+      <focusedlayout width="265" height="445">
+        <control type="image"><left>3</left><top>3</top><width>259</width><height>432</height><texture colordiffuse="NoiroPanelFocus">colors/white.png</texture></control>
+        <include>NoiroPosterItem</include>
+      </focusedlayout>
+    </control>
+    <control type="scrollbar" id="60"><right>35</right><top>240</top><width>12</width><height>740</height><orientation>vertical</orientation></control>
+  </controls>
+</window>

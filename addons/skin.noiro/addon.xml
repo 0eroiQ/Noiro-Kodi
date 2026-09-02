@@ -1,15 +1,22 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="skin.noiro" name="Noiro" version="0.2.2" provider-name="Noiro">
+<addon id="skin.noiro" name="Noiro" version="0.2.3" provider-name="Noiro">
   <requires>
     <import addon="xbmc.gui" version="5.17.0"/>
-    <import addon="plugin.video.noiro" version="0.2.2"/>
+    <import addon="plugin.video.noiro" version="0.2.3"/>
   </requires>
   <extension point="xbmc.gui.skin" debugging="false">
-    <res width="1920" height="1080" aspect="16:9" default="true" folder="1080i"/>
+    <res width="1920" height="1440" aspect="4:3" default="false" folder="xml"/>
+    <res width="1920" height="1280" aspect="3:2" default="false" folder="xml"/>
+    <res width="1920" height="1200" aspect="16:10" default="false" folder="xml"/>
+    <res width="2040" height="1080" aspect="17:9" default="false" folder="xml"/>
+    <res width="1920" height="1080" aspect="16:9" default="true" folder="xml"/>
+    <res width="2560" height="1080" aspect="21:9" default="false" folder="xml"/>
+    <res width="2338" height="1080" aspect="19.5:9" default="false" folder="xml"/>
+    <res width="2160" height="1080" aspect="18:9" default="false" folder="xml"/>
   </extension>
   <extension point="xbmc.addon.metadata">
     <summary lang="en_GB">NoiroTV interface for Kodi 21</summary>
-    <description lang="en_GB">A dark, remote-first Noiro shell. Estuary remains available through PIN-protected maintenance mode.</description>
+    <description lang="en_GB">A dark, remote-first Noiro shell built on the complete Kodi 21 Estuary window base for safe OSMC compatibility. Estuary remains available through PIN-protected maintenance mode.</description>
     <platform>linux</platform>
     <license>GPL-3.0-only</license>
     <source>https://github.com/0eroiQ/Noiro-Kodi</source>

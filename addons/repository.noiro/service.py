@@ -27,6 +27,15 @@ from noiro_repo.security import atomic_json  # noqa: E402
 
 
 PUBLIC_KEY = os.path.join(ROOT, "resources", "public_key.json")
+REQUIRED_ADDONS = (
+    "repository.noiro",
+    "script.module.noiro",
+    "script.service.noiro",
+    "plugin.video.noiro",
+    "script.noiro.setup",
+    "script.noiro.return",
+    "skin.noiro",
+)
 
 
 def read_json(name):
@@ -113,30 +122,6 @@ class RepositoryProxy(object):
             self.thread.join(timeout=3)
 
 
-def after_configured():
-    time.sleep(1)
-    xbmc.executebuiltin("UpdateAddonRepos")
-    time.sleep(8)
-    xbmc.executebuiltin("InstallAddon(script.noiro.setup)")
-    deadline = time.time() + 60
-    while time.time() < deadline:
-        try:
-            xbmcaddon.Addon("script.noiro.setup")
-            xbmcaddon.Addon("script.service.noiro")
-            xbmcaddon.Addon("plugin.video.noiro")
-            xbmcaddon.Addon("skin.noiro")
-            xbmcaddon.Addon("script.noiro.return")
-            time.sleep(4)
-            xbmc.executebuiltin("RunAddon(script.noiro.setup,?action=first_setup)")
-            return
-        except RuntimeError:
-            time.sleep(2)
-    xbmcgui.Dialog().ok(
-        "Noiro setup",
-        "Kodi could not finish installing the signed Noiro packages. Estuary remains active; open Noiro Repository and retry.",
-    )
-
-
 def repository_client():
     return GitHubReleaseClient(None, os.path.join(DATA, "cache"), PUBLIC_KEY)
 
@@ -151,6 +136,60 @@ def installer():
         DATA,
         state_path(),
     )
+
+
+def installed_versions_match():
+    expected = ADDON.getAddonInfo("version")
+    try:
+        return all(xbmcaddon.Addon(addon_id).getAddonInfo("version") == expected for addon_id in REQUIRED_ADDONS)
+    except RuntimeError:
+        return False
+
+
+def first_setup_path():
+    return os.path.join(DATA, "first-setup-pending.json")
+
+
+def service_state():
+    try:
+        with open(state_path(), "r", encoding="utf-8") as handle:
+            value = json.load(handle)
+        return value if isinstance(value, dict) else {}
+    except (OSError, ValueError):
+        return {}
+
+
+def provision_signed_release():
+    current = ADDON.getAddonInfo("version")
+    installed = installer().install(repository_client(), current)
+    if not service_state().get("noiro_enabled"):
+        atomic_json(first_setup_path(), {
+            "version": installed,
+            "requested_at": int(time.time()),
+        })
+    xbmcgui.Dialog().notification(
+        "Noiro setup",
+        "Installed the complete signed Noiro %s package" % installed,
+        xbmcgui.NOTIFICATION_INFO,
+        7000,
+    )
+    time.sleep(2)
+    xbmc.executebuiltin("RestartApp")
+
+
+def start_first_setup_once():
+    if not os.path.isfile(first_setup_path()):
+        return False
+    try:
+        for addon_id in REQUIRED_ADDONS:
+            xbmcaddon.Addon(addon_id)
+    except RuntimeError:
+        return False
+    service_socket = xbmcvfs.translatePath("special://profile/addon_data/script.service.noiro/noiro-v1.sock")
+    if not os.path.exists(service_socket):
+        return False
+    xbmc.executebuiltin("RunAddon(script.noiro.setup,?action=first_setup)")
+    return True
 
 
 def refresh_available_update():
@@ -214,8 +253,12 @@ def run():
     proxy.start()
     bootstrap = None
     setup_window = None
+    configured_event = threading.Event()
+    provision_attempted = False
+    first_setup_started = False
+    started_at = time.time()
     if not is_configured():
-        bootstrap = BootstrapServer(DATA, PUBLIC_KEY, on_configured=after_configured)
+        bootstrap = BootstrapServer(DATA, PUBLIC_KEY, on_configured=configured_event.set)
         bootstrap.start()
         setup_window = show_setup(bootstrap.url)
     monitor = xbmc.Monitor()
@@ -225,6 +268,22 @@ def run():
             if setup_window and is_configured():
                 setup_window.close()
                 setup_window = None
+            should_provision = configured_event.is_set() or (
+                is_configured() and not installed_versions_match()
+            )
+            if should_provision and not provision_attempted and not xbmc.Player().isPlaying():
+                provision_attempted = True
+                try:
+                    provision_signed_release()
+                    return
+                except (OSError, ReleaseError, InstallError) as error:
+                    xbmcgui.Dialog().ok(
+                        "Noiro setup",
+                        "The signed Noiro package could not be installed. Estuary remains active.\n\n%s" % error,
+                    )
+            if (not first_setup_started and time.time() - started_at >= 8
+                    and start_first_setup_once()):
+                first_setup_started = True
             if time.time() >= next_release_check:
                 try:
                     refresh_available_update()

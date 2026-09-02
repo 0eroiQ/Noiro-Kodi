@@ -26,10 +26,27 @@ class NativeEngine(object):
         root = xbmcvfs.translatePath(addon.getAddonInfo("path"))
         self.binary = os.path.join(root, "resources", "bin", "linux-armhf", "noiro-engine")
         self.process = None
+        self.adopted = False
         self.last_start = 0
+
+    @staticmethod
+    def _healthy():
+        try:
+            from noiro.rpc import JsonRpcClient
+            value = JsonRpcClient(engine_socket_path(), timeout=1).call("system.health")
+            return bool((value or {}).get("ready"))
+        except Exception:
+            return False
 
     def start(self):
         if self.process and self.process.poll() is None:
+            return True
+        # Kodi can be restarted by OSMC without killing children that were
+        # spawned by the previous Python service. Reuse a healthy orphaned
+        # engine instead of starting another copy that steals its socket.
+        if self._healthy():
+            self.adopted = True
+            LOG.info("Reusing the existing native Noiro engine")
             return True
         if not os.path.isfile(self.binary):
             LOG.warning("Native engine is not bundled in this development build")
@@ -38,6 +55,7 @@ class NativeEngine(object):
             return False
         self.last_start = time.time()
         self.process = None
+        self.adopted = False
         try:
             os.chmod(self.binary, 0o755)
             self.process = subprocess.Popen(
@@ -59,12 +77,17 @@ class NativeEngine(object):
     def ensure_running(self):
         if self.process and self.process.poll() is None:
             return True
+        if self._healthy():
+            self.adopted = self.process is None
+            return True
         if self.process:
             LOG.error("Native engine exited with status %s; restarting", self.process.returncode)
             self.process = None
         return self.start()
 
     def stop(self):
+        if self.adopted:
+            return
         if not self.process:
             return
         self.process.terminate()
@@ -235,7 +258,10 @@ def boot_preflight(backend, monitor):
             and native.get("ready")
             and repository_ready()
         )
-        if pending:
+        # The first repository bootstrap is verified while Estuary is still
+        # active. A skin heartbeat is required only for an already-enabled
+        # Noiro installation being updated.
+        if pending and state.get("noiro_enabled") and not state.get("maintenance_mode"):
             healthy = healthy and xbmcgui.Window(10000).getProperty("Noiro.SkinHeartbeat") == "1"
         if healthy:
             break

@@ -6,15 +6,18 @@ import sys
 import tempfile
 import unittest
 import zipfile
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "addons/repository.noiro/resources/lib"))
+sys.path.insert(0, str(ROOT / "addons/script.module.noiro/lib"))
 
 from noiro_repo.installer import InstallError, TransactionalInstaller  # noqa: E402
 from noiro_repo.bootstrap import BootstrapServer  # noqa: E402
 from noiro_repo.github import GitHubReleaseClient  # noqa: E402
+from noiro.kodi import _replace_skin_setting  # noqa: E402
 
 
 def addon_zip(addon_id, marker, unsafe=False):
@@ -82,6 +85,56 @@ class PublicRepositoryTests(unittest.TestCase):
         self.assertNotIn("github_token", form)
         self.assertNotIn("fine-grained", form)
         self.assertIn("Maintenance PIN", form)
+
+    def test_kodi_repository_does_not_depend_on_its_own_loopback_service(self):
+        root = ET.parse(ROOT / "addons/repository.noiro/addon.xml").getroot()
+        directory = root.find("./extension[@point='xbmc.addon.repository']/dir")
+        values = [directory.find(name).text for name in ("info", "checksum", "datadir")]
+        self.assertTrue(all(value.startswith("https://github.com/0eroiQ/Noiro-Kodi/releases/latest/download/") for value in values))
+        self.assertTrue(all("127.0.0.1" not in value for value in values))
+
+    def test_bootstrap_installs_the_complete_signed_release_transactionally(self):
+        service = (ROOT / "addons/repository.noiro/service.py").read_text(encoding="utf-8")
+        self.assertIn("provision_signed_release()", service)
+        self.assertIn("installer().install(repository_client(), current)", service)
+        self.assertNotIn("InstallAddon(script.noiro.setup)", service)
+
+    def test_skin_contains_complete_vero_compatible_base(self):
+        skin = ROOT / "addons/skin.noiro"
+        for name in ("AddonBrowser.xml", "Settings.xml", "Home.xml", "Timers.xml"):
+            self.assertTrue((skin / "xml" / name).is_file(), name)
+        self.assertTrue((skin / "media" / "Textures.xbt").is_file())
+        self.assertTrue((skin / "fonts" / "NotoSans-Regular.ttf").is_file())
+        active_xml = "".join(path.read_text(encoding="utf-8") for path in (skin / "xml").glob("*.xml"))
+        self.assertNotIn("white.svg", active_xml)
+
+    def test_skin_preference_update_preserves_other_kodi_settings(self):
+        original = """<?xml version='1.0'?>
+<settings>
+  <setting id="audiooutput.channels">8</setting>
+  <setting id="lookandfeel.skin">skin.estuary</setting>
+  <setting id="videoscreen.screenmode">DESKTOP</setting>
+</settings>
+"""
+        updated = _replace_skin_setting(original, "skin.noiro")
+        self.assertIn('<setting id="lookandfeel.skin">skin.noiro</setting>', updated)
+        self.assertIn('<setting id="audiooutput.channels">8</setting>', updated)
+        self.assertIn('<setting id="videoscreen.screenmode">DESKTOP</setting>', updated)
+        self.assertEqual(updated.count("skin.noiro"), 1)
+
+    def test_skin_preference_rejects_an_unsafe_identifier(self):
+        with self.assertRaises(ValueError):
+            _replace_skin_setting(
+                '<setting id="lookandfeel.skin">skin.estuary</setting>',
+                "skin.noiro</setting><malicious>",
+            )
+
+    def test_skin_switch_confirms_before_profile_dialogs(self):
+        helper = (ROOT / "addons/script.module.noiro/lib/noiro/kodi.py").read_text(encoding="utf-8")
+        self.assertIn('int(window.get("id") or 0) == 10100', helper)
+        self.assertIn('json_rpc("Input.Left")', helper)
+        self.assertIn('json_rpc("Input.Select")', helper)
+        self.assertIn("os.replace(temporary, path)", helper)
 
 
 class InstallerTests(unittest.TestCase):

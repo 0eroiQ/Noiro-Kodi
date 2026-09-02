@@ -10,7 +10,7 @@ import xbmcgui  # type: ignore
 import xbmcvfs  # type: ignore
 
 from noiro.kodi import activate, set_skin
-from noiro.paths import service_data, socket_path
+from noiro.paths import repository_data, service_data, socket_path
 from noiro.rpc import JsonRpcClient, RpcError
 
 
@@ -29,6 +29,31 @@ def call(method, value=None):
 
 def notify(title, message):
     DIALOG.notification(title, message, xbmcgui.NOTIFICATION_INFO, 5000)
+
+
+def skin_runtime_ready():
+    try:
+        root = xbmcvfs.translatePath(xbmcaddon.Addon("skin.noiro").getAddonInfo("path"))
+    except RuntimeError:
+        return False
+    required = (
+        os.path.join(root, "xml", "Home.xml"),
+        os.path.join(root, "xml", "AddonBrowser.xml"),
+        os.path.join(root, "xml", "Settings.xml"),
+        os.path.join(root, "xml", "Includes.xml"),
+        os.path.join(root, "xml", "Font.xml"),
+        os.path.join(root, "fonts", "NotoSans-Regular.ttf"),
+        os.path.join(root, "media", "Textures.xbt"),
+    )
+    return all(os.path.isfile(path) for path in required)
+
+
+def complete_bootstrap():
+    path = os.path.join(repository_data(), "first-setup-pending.json")
+    try:
+        os.unlink(path)
+    except OSError:
+        pass
 
 
 def maintenance_pin():
@@ -294,6 +319,8 @@ def return_noiro():
             xbmcaddon.Addon(addon_id)
         if major != 21 or not health.get("ready") or not (health.get("native") or {}).get("ready"):
             raise RuntimeError("This Noiro release is not compatible with the installed Kodi version")
+        if not skin_runtime_ready():
+            raise RuntimeError("The complete Noiro skin package is not installed")
         call("system.set_maintenance", {"enabled": False})
         call("system.set_enabled", {"enabled": True})
         set_skin("skin.noiro")
@@ -454,6 +481,9 @@ def first_setup():
     if not health.get("ready") or not (health.get("native") or {}).get("ready"):
         DIALOG.ok("Noiro setup", "The native Noiro engine did not pass its health check. Estuary will remain active.")
         return
+    if not skin_runtime_ready():
+        DIALOG.ok("Noiro setup", "The complete Noiro skin package did not pass its file check. Estuary will remain active.")
+        return
     profiles = call("profiles.list")
     if not profiles:
         profile = create_profile()
@@ -462,6 +492,7 @@ def first_setup():
     call("system.set_enabled", {"enabled": True})
     call("system.set_maintenance", {"enabled": False})
     set_skin("skin.noiro")
+    complete_bootstrap()
     select_profile(boot=True)
 
 

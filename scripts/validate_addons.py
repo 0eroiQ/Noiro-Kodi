@@ -31,6 +31,13 @@ REQUIRED_SKIN_WINDOWS = (
     "Pointer.xml",
     "Font.xml",
     "Includes.xml",
+    "AddonBrowser.xml",
+    "Settings.xml",
+    "SettingsCategory.xml",
+    "SettingsSystemInfo.xml",
+    "MyPrograms.xml",
+    "MyMusicNav.xml",
+    "MyPics.xml",
 )
 
 
@@ -92,10 +99,24 @@ def main():
             ET.parse(path)
         except ET.ParseError as error:
             errors += fail("%s: %s" % (path, error))
-    skin_root = ROOT / "addons" / "skin.noiro" / "1080i"
+    skin_addon = ROOT / "addons" / "skin.noiro"
+    skin_root = skin_addon / "xml"
     for name in REQUIRED_SKIN_WINDOWS:
         if not (skin_root / name).is_file():
             errors += fail("skin.noiro: required Kodi window is missing: %s" % name)
+    for path in sorted(skin_root.glob("*.xml")):
+        if "white.svg" in path.read_text(encoding="utf-8"):
+            errors += fail("skin.noiro: active Kodi windows must not use SVG textures on Vero: %s" % path)
+    for path in (
+            skin_addon / "fonts" / "NotoSans-Regular.ttf",
+            skin_addon / "fonts" / "NotoSans-Bold.ttf",
+            skin_addon / "media" / "Textures.xbt"):
+        if not path.is_file():
+            errors += fail("skin.noiro: required Estuary compatibility asset is missing: %s" % path)
+    repository = ROOT / "addons" / "repository.noiro" / "addon.xml"
+    repository_text = repository.read_text(encoding="utf-8")
+    if "127.0.0.1" in repository_text:
+        errors += fail("repository.noiro: Kodi repository URLs must not depend on its own running service")
     for path in sorted((ROOT / "addons").rglob("*.py")) + sorted((ROOT / "scripts").glob("*.py")):
         try:
             ast.parse(path.read_text(encoding="utf-8"), filename=str(path), feature_version=(3, 9))

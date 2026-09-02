@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<window>
+  <defaultcontrol always="true">10</defaultcontrol>
+  <onload>ActivateWindow(Home)</onload>
+  <controls>
+    <include>NoiroBackground</include>
+    <control type="label" id="10">
+      <left>0</left><top>420</top><width>1920</width><height>130</height>
+      <align>center</align><font>fontHero</font><textcolor>NoiroText</textcolor><label>NOIRO</label>
+    </control>
+  </controls>
+</window>
