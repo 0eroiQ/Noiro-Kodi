@@ -52,8 +52,11 @@ boundary.
 
 ## Signed public updates
 
-The public repository and direct release assets require no GitHub account,
-token or GitHub API quota.
+The public bootstrap repository and direct release assets require no GitHub
+account, token or GitHub API quota. Kodi's native repository exposes only the
+small `repository.noiro` bootstrap package; its service verifies and installs
+the complete Noiro bundle transactionally so tightly-coupled packages cannot
+be updated separately.
 Every release is still accepted only after RSA signature, Kodi compatibility
 and per-file SHA-256 verification. Kodi reaches the repository through a local
 loopback proxy, and setup keeps only the optional Gemini key and Maintenance PIN.
@@ -65,7 +68,7 @@ build instructions, license notices and artifact checksums.
 commit recorded in `native/upstream-core.json`, so the corresponding-source
 archive does not depend on a future GitHub checkout remaining available.
 
-Version 0.3.1 is an installable alpha with an integrated widget-first Home,
+Version 0.3.2 is an installable alpha with an integrated widget-first Home,
 lightweight Noiro details, playback, search and system dialogs, plus an
 official-OSMC-skin maintenance path. Automated checks and the armhf ABI gate
 are complete; physical Vero acceptance remains a separate gate for every

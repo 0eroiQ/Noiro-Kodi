@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: Release tag, for example v0.3.0
+        description: Release tag, for example v0.3.2
         required: true
 
 permissions:
@@ -40,3 +40,23 @@ jobs:
           --repo "${{ github.repository }}"
           --title "Noiro Kodi ${{ inputs.tag }}"
           --notes "Signed Noiro Kodi release for Kodi 21 on Vero 4K+."
+      - name: Publish Kodi bootstrap repository tree
+        run: |
+          publish_root="$(mktemp -d)"
+          publish_dir="$publish_root/tree"
+          if git ls-remote --exit-code --heads origin kodi-repository; then
+            git fetch origin kodi-repository
+            git worktree add -B kodi-repository "$publish_dir" origin/kodi-repository
+          else
+            git worktree add --detach "$publish_dir"
+            git -C "$publish_dir" switch --orphan kodi-repository
+            git -C "$publish_dir" rm -rf . || true
+          fi
+          python3 scripts/build_kodi_repository_tree.py --artifacts artifacts --output "$publish_dir"
+          git -C "$publish_dir" config user.name "github-actions[bot]"
+          git -C "$publish_dir" config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git -C "$publish_dir" add addons.xml addons.xml.sha256 repository.noiro
+          if ! git -C "$publish_dir" diff --cached --quiet; then
+            git -C "$publish_dir" commit -m "release: publish ${{ inputs.tag }} Kodi repository"
+          fi
+          git -C "$publish_dir" push origin HEAD:kodi-repository

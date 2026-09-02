@@ -160,7 +160,7 @@ class ProClient(object):
         body = None
         headers = {
             "Accept": "application/json",
-            "User-Agent": "Noiro-Kodi/0.3.1",
+            "User-Agent": "Noiro-Kodi/0.3.2",
         }
         if payload is not None:
             body = json.dumps(payload, separators=(",", ":")).encode("utf-8")

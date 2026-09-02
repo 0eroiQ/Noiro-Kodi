@@ -4,6 +4,8 @@
   GitHub token is requested, stored, placed in a URL or sent in a header. The
   updater uses direct release-download URLs rather than the rate-limited GitHub
   API; the signed manifest remains the release identity and trust boundary.
+  Kodi's native index exposes only `repository.noiro`; all other Noiro packages
+  are installed together by the signed transactional updater.
 - Gemini and Stremio secrets are redacted from Noiro logs. OSMC has no
   hardware keychain, so local secret files are honestly described as
   permission-protected rather than hardware-encrypted; they use mode `0600`.

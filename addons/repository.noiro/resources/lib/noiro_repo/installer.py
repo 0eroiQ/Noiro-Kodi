@@ -68,8 +68,10 @@ class TransactionalInstaller(object):
 
     def _mark_pending(self, version, previous_version, backup_name):
         state = self._state()
+        # Preserve the user's current mode. An update requested while the
+        # official OSMC skin is open must not silently force Noiro back on at
+        # restart; Noiro's Return action performs that transition explicitly.
         state.update({
-            "maintenance_mode": False,
             "boot_pending": {
                 "version": version,
                 "previous_version": previous_version,

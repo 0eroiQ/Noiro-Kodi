@@ -244,8 +244,10 @@ def boot_preflight(backend, monitor):
     pending = state.get("boot_pending")
     missing = [addon_id for addon_id in required_addons() if not addon_exists(addon_id)]
     healthy = False
-    prior_failed_boot = bool(pending and int(state.get("failed_boots") or 0) > 0)
-    deadline = time.time() if prior_failed_boot else time.time() + (45 if pending else 30)
+    # Every boot gets its own grace period. The native engine and repository
+    # services start asynchronously after Kodi, so an immediate second check
+    # would turn one recoverable failure into an unconditional rollback.
+    deadline = time.time() + (45 if pending else 30)
     while time.time() < deadline and not monitor.abortRequested():
         service_health = backend.system_health({})
         native = service_health.get("native") or {}
@@ -267,8 +269,6 @@ def boot_preflight(backend, monitor):
             break
         monitor.waitForAbort(1)
     if pending:
-        if prior_failed_boot:
-            healthy = False
         if healthy:
             backend.state.confirm_boot()
         else:

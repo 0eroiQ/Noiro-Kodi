@@ -13,11 +13,13 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "addons/repository.noiro/resources/lib"))
 sys.path.insert(0, str(ROOT / "addons/script.module.noiro/lib"))
+sys.path.insert(0, str(ROOT / "scripts"))
 
 from noiro_repo.installer import InstallError, TransactionalInstaller  # noqa: E402
 from noiro_repo.bootstrap import BootstrapServer  # noqa: E402
 from noiro_repo.github import GitHubReleaseClient  # noqa: E402
 from noiro.kodi import _replace_skin_setting  # noqa: E402
+from build_kodi_repository_tree import build_tree  # noqa: E402
 
 
 def addon_zip(addon_id, marker, unsafe=False):
@@ -90,8 +92,32 @@ class PublicRepositoryTests(unittest.TestCase):
         root = ET.parse(ROOT / "addons/repository.noiro/addon.xml").getroot()
         directory = root.find("./extension[@point='xbmc.addon.repository']/dir")
         values = [directory.find(name).text for name in ("info", "checksum", "datadir")]
-        self.assertTrue(all(value.startswith("https://github.com/0eroiQ/Noiro-Kodi/releases/latest/download/") for value in values))
+        self.assertTrue(all(value.startswith("https://raw.githubusercontent.com/0eroiQ/Noiro-Kodi/kodi-repository/") for value in values))
         self.assertTrue(all("127.0.0.1" not in value for value in values))
+
+    def test_kodi_repository_tree_uses_the_required_addon_id_directory(self):
+        with tempfile.TemporaryDirectory() as source, tempfile.TemporaryDirectory() as output:
+            source = Path(source)
+            payload = b"signed bootstrap"
+            (source / "addons.xml").write_text("<addons/>", encoding="utf-8")
+            (source / "addons.xml.sha256").write_text("index\n", encoding="ascii")
+            (source / "repository.noiro-9.9.9.zip").write_bytes(payload)
+            (source / "release-manifest.json").write_text(json.dumps({
+                "artifacts": [{
+                    "name": "repository.noiro-9.9.9.zip",
+                    "addon_id": "repository.noiro",
+                    "kind": "kodi-addon",
+                    "sha256": "bootstrap-sha256",
+                }],
+            }), encoding="utf-8")
+            build_tree(source, output)
+            package = Path(output, "repository.noiro", "repository.noiro-9.9.9.zip")
+            self.assertEqual(package.read_bytes(), payload)
+            self.assertEqual(package.with_name(package.name + ".sha256").read_text(), "bootstrap-sha256\n")
+
+    def test_kodi_index_exposes_only_the_transactional_bootstrap(self):
+        builder = (ROOT / "scripts/build_repository.py").read_text(encoding="utf-8")
+        self.assertIn('if addon_dir.name == "repository.noiro":', builder)
 
     def test_bootstrap_installs_the_complete_signed_release_transactionally(self):
         service = (ROOT / "addons/repository.noiro/service.py").read_text(encoding="utf-8")
@@ -231,6 +257,22 @@ class InstallerTests(unittest.TestCase):
         self.assertEqual(restored, "0.1.0")
         self.assertEqual(Path(self.addons, self.existing_addon, "marker.txt").read_text(), "old")
         self.assertTrue(json.loads(Path(self.state).read_text())["maintenance_mode"])
+
+    def test_update_preserves_existing_maintenance_mode(self):
+        Path(self.state).parent.mkdir(parents=True, exist_ok=True)
+        Path(self.state).write_text(json.dumps({"maintenance_mode": True}), encoding="utf-8")
+        self.installer.install(
+            FakeRelease({self.existing_addon: addon_zip(self.existing_addon, "new")}),
+            "0.1.0",
+        )
+        state = json.loads(Path(self.state).read_text())
+        self.assertTrue(state["maintenance_mode"])
+        self.assertIsNotNone(state["boot_pending"])
+
+    def test_each_pending_boot_receives_a_health_grace_period(self):
+        service = (ROOT / "addons/script.service.noiro/service.py").read_text(encoding="utf-8")
+        self.assertIn('deadline = time.time() + (45 if pending else 30)', service)
+        self.assertNotIn('if prior_failed_boot:', service)
 
     def test_zip_slip_is_rejected(self):
         with self.assertRaises(InstallError):

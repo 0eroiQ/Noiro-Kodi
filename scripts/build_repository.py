@@ -71,7 +71,12 @@ def main():
         element = ET.parse(addon_dir / "addon.xml").getroot()
         if element.get("version") != args.version:
             raise SystemExit("%s version does not match %s" % (addon_dir.name, args.version))
-        roots.append(element)
+        # Kodi's native repository exposes only the bootstrap package. The
+        # bootstrap service installs and updates the complete signed bundle as
+        # one transaction, preserving rollback instead of letting Kodi update
+        # seven tightly-coupled packages independently.
+        if addon_dir.name == "repository.noiro":
+            roots.append(element)
         name = "%s-%s.zip" % (addon_dir.name, args.version)
         destination = output / name
         zip_tree(addon_dir, destination, addon_dir.name)
