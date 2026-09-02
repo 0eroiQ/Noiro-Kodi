@@ -329,6 +329,16 @@ def return_noiro():
         set_skin("skin.noiro")
         select_profile(boot=True)
     except (RuntimeError, RpcError) as error:
+        # A failed transition must never leave the persistent state claiming
+        # Noiro is active while Kodi has already reverted to OSMC.
+        try:
+            call("system.set_maintenance", {"enabled": True})
+        except RpcError:
+            pass
+        try:
+            set_skin("skin.osmc")
+        except RuntimeError:
+            pass
         DIALOG.ok("Return to Noiro", "%s\n\nOSMC will remain active." % error)
 
 

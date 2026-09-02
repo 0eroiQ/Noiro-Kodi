@@ -79,9 +79,10 @@ def _persist_skin_setting(skin_id):
 def _confirm_skin_change(timeout=5.0):
     """Accept Kodi's own ten-second skin confirmation dialog.
 
-    The dialog defaults to No. Waiting for and confirming it before opening a
-    Noiro profile dialog prevents the two modal windows from covering one
-    another and silently reverting the skin.
+    Skin layouts are allowed to choose different default controls, so moving
+    left or right is not reliable.  Control 11 is Kodi's canonical Yes button;
+    clicking it directly works for both the OSMC and Noiro confirmation
+    layouts and prevents a profile dialog from racing the confirmation.
     """
     import xbmc  # type: ignore
 
@@ -93,17 +94,17 @@ def _confirm_skin_change(timeout=5.0):
         ) or {}
         window = properties.get("currentwindow") or {}
         if int(window.get("id") or 0) == 10100:
-            # Kodi's confirmation always starts on No. Move to Yes and select.
-            json_rpc("Input.Left")
-            xbmc.sleep(100)
-            focused = json_rpc(
-                "GUI.GetProperties",
-                {"properties": ["currentwindow", "currentcontrol"]},
-            ) or {}
-            if int((focused.get("currentwindow") or {}).get("id") or 0) != 10100:
-                raise RuntimeError("Kodi closed the skin confirmation before it could be accepted")
-            json_rpc("Input.Select")
-            return True
+            xbmc.executebuiltin("SendClick(10100,11)")
+            close_deadline = time.monotonic() + 2.0
+            while time.monotonic() < close_deadline:
+                current = json_rpc(
+                    "GUI.GetProperties",
+                    {"properties": ["currentwindow"]},
+                ) or {}
+                if int((current.get("currentwindow") or {}).get("id") or 0) != 10100:
+                    return True
+                xbmc.sleep(50)
+            return False
         xbmc.sleep(100)
     return False
 
@@ -119,7 +120,8 @@ def set_skin(skin_id):
     changed = json_rpc("Settings.SetSettingValue", {"setting": "lookandfeel.skin", "value": skin_id})
     if changed is not True:
         raise RuntimeError("Kodi refused to change the active skin")
-    _confirm_skin_change()
+    if not _confirm_skin_change():
+        raise RuntimeError("Kodi skin confirmation could not be accepted")
     selected = json_rpc("Settings.GetSettingValue", {"setting": "lookandfeel.skin"}) or {}
     if selected.get("value") != skin_id:
         raise RuntimeError("Kodi reverted the requested skin")

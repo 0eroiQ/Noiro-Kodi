@@ -30,7 +30,7 @@ class GitHubReleaseClient(object):
         headers = {
             "Accept": accept,
             "X-GitHub-Api-Version": "2022-11-28",
-            "User-Agent": "Noiro-Kodi/0.3.2",
+            "User-Agent": "Noiro-Kodi/0.3.3",
         }
         if self.token:
             headers["Authorization"] = "Bearer %s" % self.token

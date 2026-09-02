@@ -200,9 +200,17 @@ class PublicRepositoryTests(unittest.TestCase):
     def test_skin_switch_confirms_before_profile_dialogs(self):
         helper = (ROOT / "addons/script.module.noiro/lib/noiro/kodi.py").read_text(encoding="utf-8")
         self.assertIn('int(window.get("id") or 0) == 10100', helper)
-        self.assertIn('json_rpc("Input.Left")', helper)
-        self.assertIn('json_rpc("Input.Select")', helper)
+        self.assertIn('xbmc.executebuiltin("SendClick(10100,11)")', helper)
+        self.assertNotIn('json_rpc("Input.Left")', helper)
+        self.assertIn("Kodi skin confirmation could not be accepted", helper)
         self.assertIn("os.replace(temporary, path)", helper)
+
+    def test_failed_return_to_noiro_restores_maintenance_mode(self):
+        setup = (ROOT / "addons/script.noiro.setup/addon.py").read_text(encoding="utf-8")
+        return_path = setup.split("def return_noiro", 1)[1].split("def show_logs", 1)[0]
+        failure_path = return_path.split("except (RuntimeError, RpcError) as error:", 1)[1]
+        self.assertIn('call("system.set_maintenance", {"enabled": True})', failure_path)
+        self.assertIn('set_skin("skin.osmc")', failure_path)
 
     def test_maintenance_uses_the_official_osmc_skin(self):
         setup = (ROOT / "addons/script.noiro.setup/addon.py").read_text(encoding="utf-8")

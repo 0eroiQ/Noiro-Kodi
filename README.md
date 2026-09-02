@@ -68,7 +68,7 @@ build instructions, license notices and artifact checksums.
 commit recorded in `native/upstream-core.json`, so the corresponding-source
 archive does not depend on a future GitHub checkout remaining available.
 
-Version 0.3.2 is an installable alpha with an integrated widget-first Home,
+Version 0.3.3 is an installable alpha with an integrated widget-first Home,
 lightweight Noiro details, playback, search and system dialogs, plus an
 official-OSMC-skin maintenance path. Automated checks and the armhf ABI gate
 are complete; physical Vero acceptance remains a separate gate for every
