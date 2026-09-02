@@ -1809,6 +1809,10 @@
 		<texturefocus border="24" colordiffuse="NoiroSurfaceFocus">buttons/dialogbutton-nofo.png</texturefocus>
 		<texturenofocus border="24" colordiffuse="NoiroTransparent">buttons/dialogbutton-nofo.png</texturenofocus>
 	</include>
+	<variable name="NoiroPlayPauseLabel">
+		<value condition="Player.Paused">Play</value>
+		<value>Pause</value>
+	</variable>
 
 	<!-- The hero follows whichever Home rail owns focus. When focus is in the
 	     top navigation, Featured remains the stable background. -->
