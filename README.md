@@ -51,7 +51,8 @@ boundary.
 
 ## Signed public updates
 
-The public repository and release assets require no GitHub account or token.
+The public repository and direct release assets require no GitHub account,
+token or GitHub API quota.
 Every release is still accepted only after RSA signature, Kodi compatibility
 and per-file SHA-256 verification. Kodi reaches the repository through a local
 loopback proxy, and setup keeps only the optional Gemini key and Maintenance PIN.
@@ -63,5 +64,5 @@ build instructions, license notices and artifact checksums.
 commit recorded in `native/upstream-core.json`, so the corresponding-source
 archive does not depend on a future GitHub checkout remaining available.
 
-Version 0.2.0 is an installable alpha. Automated checks and the armhf ABI gate
+Version 0.2.1 is an installable alpha. Automated checks and the armhf ABI gate
 are complete; the physical Vero acceptance checklist remains a separate gate.

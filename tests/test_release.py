@@ -66,14 +66,16 @@ class PublicRepositoryTests(unittest.TestCase):
 
         def opener(request, timeout=None):
             captured.append(request)
-            return FakeResponse(json.dumps({
-                "full_name": "0eroiQ/Noiro-Kodi",
-                "private": False,
-            }).encode("utf-8"))
+            return FakeResponse(json.dumps({"ok": True}).encode("utf-8"))
 
         client = GitHubReleaseClient(None, "/tmp/noiro-test-cache", "/tmp/noiro-public-key", opener=opener)
-        self.assertTrue(client.validate_repository())
+        client._request(client.LATEST + "/release-manifest.json")
         self.assertIsNone(captured[0].get_header("Authorization"))
+
+    def test_repository_identity_comes_from_signed_manifest(self):
+        client = GitHubReleaseClient(None, "/tmp/noiro-test-cache", "/tmp/noiro-public-key")
+        client.load_latest = lambda force=False: {"product": "Noiro-Kodi"}
+        self.assertTrue(client.validate_repository())
 
     def test_bootstrap_form_does_not_request_github_token(self):
         form = BootstrapServer.form()

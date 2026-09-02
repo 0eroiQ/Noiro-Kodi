@@ -1,7 +1,9 @@
 # Security model
 
 - GitHub downloads are anonymous because `0eroiQ/Noiro-Kodi` is public. No
-  GitHub token is requested, stored, placed in a URL or sent in a header.
+  GitHub token is requested, stored, placed in a URL or sent in a header. The
+  updater uses direct release-download URLs rather than the rate-limited GitHub
+  API; the signed manifest remains the release identity and trust boundary.
 - Gemini and Stremio secrets are redacted from Noiro logs. OSMC has no
   hardware keychain, so local secret files are honestly described as
   permission-protected rather than hardware-encrypted; they use mode `0600`.

@@ -71,7 +71,7 @@ until those controls and the business account are configured and tested.
 
 ## First active gate
 
-Version 0.2.0 uses `pro_badge` as the first harmless, testable gated feature.
+Version 0.2.1 uses `pro_badge` as the first harmless, testable gated feature.
 `pro_preview` reserves access to future preview screens but does not claim that
 cloud sync or managed translation already exists. Existing Free behavior is
 unchanged if the account service is offline, the token is removed or an
