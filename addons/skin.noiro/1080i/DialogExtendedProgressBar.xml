@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<window>
+  <controls>
+    <control type="group">
+      <right>70</right><bottom>70</bottom>
+      <control type="image"><width>720</width><height>190</height><texture colordiffuse="EE151A25">white.svg</texture></control>
+      <control type="label" id="30"><left>28</left><top>24</top><width>664</width><height>45</height><font>font16</font><textcolor>NoiroText</textcolor></control>
+      <control type="label" id="31"><left>28</left><top>76</top><width>664</width><height>42</height><font>font12</font><textcolor>NoiroMuted</textcolor></control>
+      <control type="progress" id="32"><left>28</left><top>140</top><width>664</width><height>14</height><texturebg colordiffuse="NoiroBackground">white.svg</texturebg><midtexture colordiffuse="NoiroAccent">white.svg</midtexture></control>
+    </control>
+  </controls>
+</window>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<window>
+  <defaultcontrol always="true">9000</defaultcontrol>
+  <onload>SetProperty(Noiro.SkinHeartbeat,1,home)</onload>
+  <onunload>ClearProperty(Noiro.SkinHeartbeat,home)</onunload>
+  <controls>
+    <include>NoiroBackground</include>
+    <include>NoiroHeader</include>
+    <control type="label">
+      <left>90</left><top>230</top><width>1200</width><height>130</height>
+      <font>fontHero</font><textcolor>NoiroText</textcolor><label>What do you want to watch?</label>
+    </control>
+    <control type="grouplist" id="9000">
+      <left>90</left><top>430</top><width>700</width><height>480</height><orientation>vertical</orientation><itemgap>18</itemgap>
+      <control type="button" id="9001"><include>NoiroButton</include><label>Open NoiroTV</label><onclick>ActivateWindow(Videos,plugin://plugin.video.noiro/,return)</onclick></control>
+      <control type="button" id="9002"><include>NoiroButton</include><label>Switch profile</label><onclick>RunAddon(script.noiro.setup,?action=profiles)</onclick></control>
+      <control type="button" id="9003"><include>NoiroButton</include><label>Search</label><onclick>ActivateWindow(Videos,plugin://plugin.video.noiro/?action=search,return)</onclick></control>
+      <control type="button" id="9004"><include>NoiroButton</include><label>Settings</label><onclick>RunAddon(script.noiro.setup,?action=settings)</onclick></control>
+    </control>
+    <control type="label">
+      <right>95</right><bottom>65</bottom><width>900</width><height>55</height>
+      <align>right</align><font>font12</font><textcolor>NoiroMuted</textcolor><label>OSMC + Kodi playback · Noiro experience</label>
+    </control>
+  </controls>
+</window>

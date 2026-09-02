@@ -1,0 +1,63 @@
+# Noiro Kodi
+
+NoiroTV for Vero 4K+ keeps OSMC and Kodi as the operating system, hardware
+decoder, HDR, refresh-rate and HDMI-audio layer while replacing the normal TV
+experience with Noiro profiles, Stremio account data and a Noiro skin.
+
+## Safety boundary
+
+- This project never writes the bootloader, partition table or OSMC image.
+- The first release plays direct and debrid-resolved URLs only.
+- Raw magnet/torrent results are visible but locked.
+- The proprietary Stremio `server.js` is not included.
+- Estuary remains installed and is the recovery/maintenance environment.
+
+## Add-ons
+
+| Add-on | Purpose |
+| --- | --- |
+| `repository.noiro` | Bootstrap, authenticated GitHub proxy and release verification |
+| `script.module.noiro` | Shared Python API, storage and security primitives |
+| `script.service.noiro` | Startup service, engine supervisor and health/rollback control |
+| `plugin.video.noiro` | Home, discovery, search, library, streams and playback routes |
+| `script.noiro.setup` | Profiles, Stremio QR linking and maintenance mode |
+| `script.noiro.return` | Always-visible Return to Noiro entry in Estuary |
+| `skin.noiro` | Remote-first Noiro interface for Kodi 21 |
+
+## Development
+
+```bash
+python3 -m unittest discover -s tests -v
+python3 scripts/validate_addons.py
+sh scripts/build_native.sh
+python3 scripts/build_repository.py --require-native
+python3 scripts/sign_release.py --private-key /secure/path/release-private.pem
+python3 scripts/verify_release.py --require-signature
+```
+
+The repository builder creates Kodi-compatible ZIP files, `addons.xml`, its
+checksum, a SHA-256 manifest, corresponding source and a single bootstrap ZIP
+under `artifacts/`.
+
+The native engine is built in the Debian 11 armhf container so its glibc ABI
+matches the OSMC recovery userland. The Apple Noiro repository is not modified.
+
+See [architecture](docs/ARCHITECTURE.md), [security](docs/SECURITY.md), the
+[Vero installation guide](docs/VERO_INSTALL.md), and the separate
+[physical acceptance gates](docs/ACCEPTANCE.md).
+
+## Private updates
+
+The bootstrap asks for a fine-grained GitHub token restricted to this one
+repository with **Contents: read**. It is stored only in Kodi's private add-on
+data directory with mode `0600`, never placed in URLs and never written to logs.
+
+Binary releases must include the exact corresponding source, dependency lock,
+build instructions, license notices and artifact checksums.
+
+`native/vendor/stremio-core` is an unmodified snapshot of the exact upstream
+commit recorded in `native/upstream-core.json`, so the corresponding-source
+archive does not depend on a future GitHub checkout remaining available.
+
+Version 0.1.0 is an installable alpha. Automated checks and the armhf ABI gate
+are complete; the physical Vero acceptance checklist remains a separate gate.

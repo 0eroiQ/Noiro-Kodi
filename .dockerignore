@@ -1,0 +1,11 @@
+.git
+artifacts
+addons
+contracts
+docs
+release
+tests
+scripts
+native/noiro-engine/target
+**/__pycache__
+*.pyc

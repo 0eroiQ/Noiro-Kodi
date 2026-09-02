@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<addon id="script.module.noiro" name="Noiro Shared Module" version="0.1.0" provider-name="Noiro">
+  <requires>
+    <import addon="xbmc.python" version="3.0.0"/>
+  </requires>
+  <extension point="xbmc.python.module" library="lib"/>
+  <extension point="xbmc.addon.metadata">
+    <summary lang="en_GB">Shared NoiroTV client, models and secure storage</summary>
+    <platform>linux</platform>
+    <license>GPL-3.0-only</license>
+    <source>https://github.com/0eroiQ/Noiro-Kodi</source>
+  </extension>
+</addon>

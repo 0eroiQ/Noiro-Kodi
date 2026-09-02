@@ -1,0 +1,42 @@
+name: Signed private release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag, for example v0.1.0
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify release tag matches VERSION
+        run: test "${{ inputs.tag }}" = "v$(cat VERSION)"
+      - run: sh scripts/build_native.sh
+      - run: python3 -m unittest discover -s tests -v
+      - run: python3 scripts/validate_addons.py
+      - run: python3 scripts/build_repository.py --version "$(cat VERSION)" --require-native
+      - name: Import signing key
+        env:
+          NOIRO_RELEASE_PRIVATE_KEY: ${{ secrets.NOIRO_RELEASE_PRIVATE_KEY }}
+        run: |
+          test -n "$NOIRO_RELEASE_PRIVATE_KEY"
+          install -m 0600 /dev/null /tmp/noiro-release-private.pem
+          printf '%s' "$NOIRO_RELEASE_PRIVATE_KEY" > /tmp/noiro-release-private.pem
+          python3 scripts/sign_release.py --private-key /tmp/noiro-release-private.pem
+      - run: python3 scripts/verify_release.py --require-signature
+      - name: Create private repository release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          gh release create "${{ inputs.tag }}"
+          artifacts/*.zip artifacts/addons.xml artifacts/addons.xml.sha256
+          artifacts/release-manifest.json artifacts/release-manifest.sig artifacts/SHA256SUMS
+          --repo "${{ github.repository }}"
+          --title "Noiro Kodi ${{ inputs.tag }}"
+          --notes "Signed Noiro Kodi release for Kodi 21 on Vero 4K+."

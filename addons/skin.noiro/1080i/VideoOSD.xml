@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<window>
+  <defaultcontrol always="true">602</defaultcontrol>
+  <controls>
+    <control type="image"><left>0</left><bottom>0</bottom><width>1920</width><height>330</height><texture colordiffuse="F0080B12">white.svg</texture></control>
+    <control type="label"><left>70</left><bottom>225</bottom><width>1350</width><height>64</height><font>font20</font><textcolor>NoiroText</textcolor><label>$INFO[Player.Title]</label></control>
+    <control type="progress"><left>70</left><bottom>182</bottom><width>1780</width><height>14</height><info>Player.Progress</info><texturebg colordiffuse="NoiroPanel">white.svg</texturebg><midtexture colordiffuse="NoiroAccent">white.svg</midtexture></control>
+    <control type="grouplist" id="600">
+      <left>70</left><bottom>55</bottom><width>1500</width><height>92</height><orientation>horizontal</orientation><itemgap>15</itemgap>
+      <control type="button" id="601"><include>NoiroOSDButton</include><label>Rewind</label><onclick>PlayerControl(Rewind)</onclick></control>
+      <control type="button" id="602"><include>NoiroOSDButton</include><label>$VAR[NoiroPlayPauseLabel]</label><onclick>PlayerControl(Play)</onclick></control>
+      <control type="button" id="603"><include>NoiroOSDButton</include><label>Forward</label><onclick>PlayerControl(Forward)</onclick></control>
+      <control type="button" id="604"><include>NoiroOSDButton</include><label>Subtitles</label><onclick>Action(CycleSubtitle)</onclick></control>
+      <control type="button" id="605"><include>NoiroOSDButton</include><label>Audio</label><onclick>Action(AudioNextLanguage)</onclick></control>
+      <control type="button" id="606"><include>NoiroOSDButton</include><label>Stop</label><onclick>PlayerControl(Stop)</onclick></control>
+    </control>
+    <control type="label"><right>70</right><bottom>224</bottom><width>450</width><height>48</height><align>right</align><font>font12</font><textcolor>NoiroText</textcolor><label>$INFO[Player.Time] / $INFO[Player.Duration]</label></control>
+  </controls>
+</window>

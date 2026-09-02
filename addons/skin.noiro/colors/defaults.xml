@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<colors>
+  <color name="NoiroBackground">FF080B12</color>
+  <color name="NoiroPanel">FF151A25</color>
+  <color name="NoiroPanelFocus">FF7567D8</color>
+  <color name="NoiroText">FFF5F4FA</color>
+  <color name="NoiroMuted">FFA8A5B3</color>
+  <color name="NoiroAccent">FFA594FF</color>
+  <color name="NoiroDanger">FFFF7474</color>
+</colors>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<addon id="plugin.video.noiro" name="NoiroTV" version="0.1.0" provider-name="Noiro">
+  <requires>
+    <import addon="xbmc.python" version="3.0.0"/>
+    <import addon="script.module.noiro" version="0.1.0"/>
+    <import addon="script.service.noiro" version="0.1.0"/>
+  </requires>
+  <extension point="xbmc.python.pluginsource" library="addon.py">
+    <provides>video</provides>
+  </extension>
+  <extension point="xbmc.addon.metadata">
+    <summary lang="en_GB">NoiroTV home, search, library, streams and playback</summary>
+    <description lang="en_GB">A remote-first Noiro client powered by Stremio account add-ons and Kodi playback.</description>
+    <platform>linux</platform>
+    <license>GPL-3.0-only</license>
+    <source>https://github.com/0eroiQ/Noiro-Kodi</source>
+  </extension>
+</addon>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<window>
+  <controls>
+    <control type="label">
+      <right>80</right><top>65</top><width>300</width><height>80</height>
+      <align>right</align><font>font20</font><textcolor>NoiroAccent</textcolor><label>Muted</label>
+    </control>
+  </controls>
+</window>

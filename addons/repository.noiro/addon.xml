@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<addon id="repository.noiro" name="Noiro Repository" version="0.1.0" provider-name="Noiro">
+  <requires>
+    <import addon="xbmc.python" version="3.0.0"/>
+  </requires>
+  <extension point="xbmc.addon.repository" name="Noiro Private Repository">
+    <dir minversion="21.0.0">
+      <info compressed="false">http://127.0.0.1:64891/repository/addons.xml</info>
+      <checksum>http://127.0.0.1:64891/repository/addons.xml.sha256</checksum>
+      <datadir zip="true">http://127.0.0.1:64891/repository/</datadir>
+      <hashes>sha256</hashes>
+    </dir>
+  </extension>
+  <extension point="xbmc.service" library="service.py" start="startup"/>
+  <extension point="xbmc.addon.metadata">
+    <summary lang="en_GB">Private, signed update channel for NoiroTV</summary>
+    <description lang="en_GB">Bootstraps NoiroTV and exposes authenticated GitHub release assets only to Kodi over loopback.</description>
+    <platform>linux</platform>
+    <license>GPL-3.0-only</license>
+    <website>https://github.com/0eroiQ/Noiro-Kodi</website>
+    <source>https://github.com/0eroiQ/Noiro-Kodi</source>
+  </extension>
+</addon>

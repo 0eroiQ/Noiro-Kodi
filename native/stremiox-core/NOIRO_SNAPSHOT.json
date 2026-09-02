@@ -1,0 +1,9 @@
+{
+  "repository": "https://github.com/0eroiQ/Noiro.git",
+  "commit": "6f6f8cbf751aa4062c58cfc7a87a8687ba82f2f7",
+  "path": "core",
+  "package": "stremiox-core",
+  "stremio_core_commit": "31393600895d0a1cee94966bd806aab41cd90e4e",
+  "license": "GPL-3.0-only",
+  "policy": "Release builds fetch this exact commit and include the complete snapshot in the corresponding-source archive."
+}

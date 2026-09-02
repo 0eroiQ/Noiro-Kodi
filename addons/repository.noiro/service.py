@@ -1,0 +1,231 @@
+import base64
+import hashlib
+import json
+import os
+import sys
+import threading
+import time
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+import xbmc  # type: ignore
+import xbmcaddon  # type: ignore
+import xbmcgui  # type: ignore
+import xbmcvfs  # type: ignore
+
+
+ADDON = xbmcaddon.Addon("repository.noiro")
+ROOT = xbmcvfs.translatePath(ADDON.getAddonInfo("path"))
+DATA = xbmcvfs.translatePath(ADDON.getAddonInfo("profile"))
+LIB = os.path.join(ROOT, "resources", "lib")
+if LIB not in sys.path:
+    sys.path.insert(0, LIB)
+
+from noiro_repo.bootstrap import BootstrapServer  # noqa: E402
+from noiro_repo.github import GitHubReleaseClient, ReleaseError  # noqa: E402
+from noiro_repo.installer import InstallError, TransactionalInstaller  # noqa: E402
+from noiro_repo.security import atomic_json  # noqa: E402
+
+
+PUBLIC_KEY = os.path.join(ROOT, "resources", "public_key.json")
+
+
+def read_credentials():
+    try:
+        with open(os.path.join(DATA, "credentials.json"), "r", encoding="utf-8") as handle:
+            return json.load(handle)
+    except (OSError, ValueError):
+        return {}
+
+
+class RepositoryProxy(object):
+    def __init__(self, port=64891):
+        self.port = port
+        self.server = None
+        self.thread = None
+
+    def client(self):
+        token = read_credentials().get("github_token")
+        if not token:
+            raise ReleaseError("Noiro repository is not configured")
+        return GitHubReleaseClient(token, os.path.join(DATA, "cache"), PUBLIC_KEY)
+
+    def start(self):
+        owner = self
+
+        class Handler(BaseHTTPRequestHandler):
+            def log_message(self, _format, *_args):
+                return
+
+            def _serve(self, include_body):
+                if not self.path.startswith("/repository/"):
+                    self.send_error(404)
+                    return
+                try:
+                    name, value = owner.client().repository_asset(self.path)
+                    content_type = "application/xml" if name.endswith(".xml") else "application/zip"
+                    if name.endswith(".sha256"):
+                        content_type = "text/plain"
+                    self.send_response(200)
+                    self.send_header("Content-Type", content_type)
+                    self.send_header("Content-Length", str(len(value)))
+                    self.send_header(
+                        "Content-SHA256",
+                        base64.b64encode(hashlib.sha256(value).digest()).decode("ascii"),
+                    )
+                    self.send_header("Cache-Control", "no-store")
+                    self.end_headers()
+                    if include_body:
+                        self.wfile.write(value)
+                except ReleaseError:
+                    self.send_error(503, "Noiro repository unavailable")
+
+            def do_GET(self):
+                self._serve(True)
+
+            def do_HEAD(self):
+                self._serve(False)
+
+        self.server = ThreadingHTTPServer(("127.0.0.1", self.port), Handler)
+        self.thread = threading.Thread(target=self.server.serve_forever, name="noiro-repository", daemon=True)
+        self.thread.start()
+
+    def stop(self):
+        if self.server:
+            self.server.shutdown()
+            self.server.server_close()
+        if self.thread:
+            self.thread.join(timeout=3)
+
+
+def after_configured():
+    time.sleep(1)
+    xbmc.executebuiltin("UpdateAddonRepos")
+    time.sleep(8)
+    xbmc.executebuiltin("InstallAddon(script.noiro.setup)")
+    deadline = time.time() + 60
+    while time.time() < deadline:
+        try:
+            xbmcaddon.Addon("script.noiro.setup")
+            xbmcaddon.Addon("script.service.noiro")
+            xbmcaddon.Addon("plugin.video.noiro")
+            xbmcaddon.Addon("skin.noiro")
+            xbmcaddon.Addon("script.noiro.return")
+            time.sleep(4)
+            xbmc.executebuiltin("RunAddon(script.noiro.setup,?action=first_setup)")
+            return
+        except RuntimeError:
+            time.sleep(2)
+    xbmcgui.Dialog().ok(
+        "Noiro setup",
+        "Kodi could not finish installing the private Noiro packages. Estuary remains active; open Noiro Repository and retry.",
+    )
+
+
+def repository_client():
+    token = read_credentials().get("github_token")
+    if not token:
+        raise ReleaseError("Noiro repository is not configured")
+    return GitHubReleaseClient(token, os.path.join(DATA, "cache"), PUBLIC_KEY)
+
+
+def state_path():
+    return xbmcvfs.translatePath("special://profile/addon_data/script.service.noiro/state.json")
+
+
+def installer():
+    return TransactionalInstaller(
+        xbmcvfs.translatePath("special://home/addons"),
+        DATA,
+        state_path(),
+    )
+
+
+def refresh_available_update():
+    manifest = repository_client().load_latest(force=True)
+    current = ADDON.getAddonInfo("version")
+    payload = {"current": current, "available": manifest.get("version"), "checked_at": int(time.time())}
+    if manifest.get("version") == current:
+        payload["up_to_date"] = True
+    atomic_json(os.path.join(DATA, "available-update.json"), payload)
+
+
+def process_control_requests():
+    install_request = os.path.join(DATA, "install-request.json")
+    rollback_request = os.path.join(DATA, "rollback-request.json")
+    if os.path.isfile(rollback_request):
+        try:
+            with open(rollback_request, "r", encoding="utf-8") as handle:
+                request = json.load(handle)
+            restored = installer().rollback(request.get("backup"))
+            os.unlink(rollback_request)
+            xbmcgui.Dialog().notification("Noiro rollback", "Restored %s; restarting in Estuary" % restored, xbmcgui.NOTIFICATION_INFO, 7000)
+            time.sleep(2)
+            xbmc.executebuiltin("RestartApp")
+        except (OSError, ValueError, InstallError) as error:
+            xbmcgui.Dialog().notification("Noiro rollback failed", str(error), xbmcgui.NOTIFICATION_ERROR, 7000)
+        return
+    if os.path.isfile(install_request):
+        if xbmc.Player().isPlaying():
+            return
+        try:
+            current = ADDON.getAddonInfo("version")
+            installed = installer().install(repository_client(), current)
+            os.unlink(install_request)
+            xbmcgui.Dialog().notification("Noiro update", "Installed %s; restarting for health check" % installed, xbmcgui.NOTIFICATION_INFO, 7000)
+            time.sleep(2)
+            xbmc.executebuiltin("RestartApp")
+        except (OSError, ReleaseError, InstallError) as error:
+            try:
+                os.unlink(install_request)
+            except OSError:
+                pass
+            xbmcgui.Dialog().notification("Noiro update failed", str(error), xbmcgui.NOTIFICATION_ERROR, 7000)
+
+
+def show_setup(url):
+    qr = "https://api.qrserver.com/v1/create-qr-code/?size=420x420&data="
+    import urllib.parse
+    window = xbmcgui.WindowDialog()
+    background = xbmcgui.ControlImage(0, 0, 1920, 1080, "", colorDiffuse="FF080B12")
+    title = xbmcgui.ControlLabel(180, 110, 1560, 70, "Set up NoiroTV", alignment=2)
+    image = xbmcgui.ControlImage(750, 230, 420, 420, qr + urllib.parse.quote(url, safe=""))
+    label = xbmcgui.ControlLabel(240, 700, 1440, 120, "Scan the QR code with your phone\nor open:\n" + url, alignment=2)
+    window.addControls([background, title, image, label])
+    window.show()
+    return window
+
+
+def run():
+    os.makedirs(DATA, mode=0o700, exist_ok=True)
+    proxy = RepositoryProxy()
+    proxy.start()
+    bootstrap = None
+    setup_window = None
+    if not read_credentials().get("github_token"):
+        bootstrap = BootstrapServer(DATA, PUBLIC_KEY, on_configured=after_configured)
+        bootstrap.start()
+        setup_window = show_setup(bootstrap.url)
+    monitor = xbmc.Monitor()
+    next_release_check = 0
+    try:
+        while not monitor.waitForAbort(2):
+            if setup_window and read_credentials().get("github_token"):
+                setup_window.close()
+                setup_window = None
+            if read_credentials().get("github_token") and time.time() >= next_release_check:
+                try:
+                    refresh_available_update()
+                except ReleaseError:
+                    pass
+                next_release_check = time.time() + 3600
+            process_control_requests()
+    finally:
+        if setup_window:
+            setup_window.close()
+        if bootstrap:
+            bootstrap.stop()
+        proxy.stop()
+
+
+if __name__ == "__main__":
+    run()

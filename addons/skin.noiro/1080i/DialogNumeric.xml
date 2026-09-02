@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<window>
+  <defaultcontrol always="true">11</defaultcontrol>
+  <controls>
+    <control type="image"><left>650</left><top>100</top><width>620</width><height>880</height><texture colordiffuse="NoiroPanel">white.svg</texture></control>
+    <control type="textbox" id="1"><left>700</left><top>145</top><width>520</width><height>70</height><align>center</align><font>font16</font><textcolor>NoiroText</textcolor></control>
+    <control type="label" id="4"><left>700</left><top>230</top><width>520</width><height>75</height><align>center</align><font>font20</font><textcolor>NoiroText</textcolor></control>
+    <control type="grouplist" id="4000"><left>775</left><top>330</top><width>370</width><height>460</height><orientation>vertical</orientation><itemgap>12</itemgap>
+      <control type="grouplist"><orientation>horizontal</orientation><itemgap>12</itemgap><control type="button" id="11"><include>KeyboardButton</include><label>1</label></control><control type="button" id="12"><include>KeyboardButton</include><label>2</label></control><control type="button" id="13"><include>KeyboardButton</include><label>3</label></control></control>
+      <control type="grouplist"><orientation>horizontal</orientation><itemgap>12</itemgap><control type="button" id="14"><include>KeyboardButton</include><label>4</label></control><control type="button" id="15"><include>KeyboardButton</include><label>5</label></control><control type="button" id="16"><include>KeyboardButton</include><label>6</label></control></control>
+      <control type="grouplist"><orientation>horizontal</orientation><itemgap>12</itemgap><control type="button" id="17"><include>KeyboardButton</include><label>7</label></control><control type="button" id="18"><include>KeyboardButton</include><label>8</label></control><control type="button" id="19"><include>KeyboardButton</include><label>9</label></control></control>
+      <control type="grouplist"><orientation>horizontal</orientation><itemgap>12</itemgap><control type="button" id="23"><include>KeyboardButton</include><label>⌫</label></control><control type="button" id="10"><include>KeyboardButton</include><label>0</label></control><control type="button" id="21"><include>KeyboardButton</include><label>Done</label></control></control>
+    </control>
+  </controls>
+</window>

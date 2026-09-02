@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<window>
+  <controls>
+    <control type="group">
+      <right>80</right><top>65</top>
+      <control type="image"><width>520</width><height>92</height><texture colordiffuse="EE151A25">white.svg</texture></control>
+      <control type="label"><left>24</left><top>20</top><width>120</width><height>50</height><font>font12</font><textcolor>NoiroText</textcolor><label>Volume</label></control>
+      <control type="label"><left>150</left><top>20</top><width>340</width><height>50</height><align>right</align><font>font16</font><textcolor>NoiroAccent</textcolor><label>$INFO[Player.Volume]</label></control>
+    </control>
+  </controls>
+</window>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<window>
+  <controls>
+    <control type="progress" id="10"><left>710</left><top>585</top><width>500</width><height>12</height><texturebg colordiffuse="NoiroPanel">white.svg</texturebg><midtexture colordiffuse="NoiroAccent">white.svg</midtexture></control>
+    <control type="label"><left>0</left><top>500</top><width>1920</width><height>70</height><align>center</align><font>font20</font><textcolor>NoiroText</textcolor><label>Loading…</label></control>
+  </controls>
+</window>

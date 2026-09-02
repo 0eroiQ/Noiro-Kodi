@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<window>
+  <onload>SetProperty(Noiro.SkinHeartbeat,1,home)</onload>
+  <onunload>ClearProperty(Noiro.SkinHeartbeat,home)</onunload>
+  <controls>
+    <control type="group">
+      <visible>Player.ShowInfo</visible>
+      <control type="image"><left>0</left><bottom>0</bottom><width>1920</width><height>250</height><texture colordiffuse="E6080B12">white.svg</texture></control>
+      <control type="label"><left>70</left><bottom>128</bottom><width>1350</width><height>62</height><font>font20</font><textcolor>NoiroText</textcolor><label>$INFO[Player.Title]</label></control>
+      <control type="label"><left>70</left><bottom>78</bottom><width>1200</width><height>42</height><font>font12</font><textcolor>NoiroMuted</textcolor><label>$INFO[Player.ChapterName]</label></control>
+      <control type="progress"><left>70</left><bottom>42</bottom><width>1780</width><height>12</height><info>Player.Progress</info><texturebg colordiffuse="NoiroPanel">white.svg</texturebg><midtexture colordiffuse="NoiroAccent">white.svg</midtexture></control>
+      <control type="label"><right>70</right><bottom>95</bottom><width>450</width><height>48</height><align>right</align><font>font12</font><textcolor>NoiroText</textcolor><label>$INFO[Player.Time] / $INFO[Player.Duration]</label></control>
+    </control>
+  </controls>
+</window>

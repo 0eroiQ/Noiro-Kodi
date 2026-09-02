@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://noiro.local/contracts/noiro-rpc-v1.schema.json",
+  "title": "Noiro local JSON-RPC v1",
+  "type": "object",
+  "oneOf": [
+    {
+      "required": ["jsonrpc", "id", "method"],
+      "properties": {
+        "jsonrpc": { "const": "2.0" },
+        "id": { "type": ["integer", "string"] },
+        "method": {
+          "enum": [
+            "system.health", "system.status", "system.set_maintenance", "system.set_enabled",
+            "system.set_maintenance_pin", "system.verify_maintenance_pin", "system.confirm_boot",
+            "profiles.list", "profiles.create", "profiles.activate", "profiles.delete",
+            "profiles.update", "profiles.unlock",
+            "stremio.link.create", "stremio.link.poll", "stremio.link.reset",
+            "stremio.catalogs", "stremio.search", "stremio.metadata", "stremio.streams",
+            "stremio.subtitles", "stremio.library", "stremio.continue", "stremio.progress", "stremio.addons.list",
+            "stremio.addons.install", "stremio.addons.remove", "stremio.addons.backups",
+            "stremio.addons.restore", "subtitle.translate", "subtitle.prepare", "subtitle.status",
+            "engine.dispatch", "engine.state"
+          ]
+        },
+        "params": { "type": "object" }
+      }
+    },
+    {
+      "required": ["jsonrpc", "id"],
+      "properties": {
+        "jsonrpc": { "const": "2.0" },
+        "id": { "type": ["integer", "string"] },
+        "result": {},
+        "error": {
+          "type": "object",
+          "required": ["code", "message"]
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<window>
+  <controls>
+    <control type="group">
+      <bottom>90</bottom><left>80</left>
+      <control type="image"><width>1760</width><height>125</height><texture colordiffuse="EE151A25">white.svg</texture></control>
+      <control type="slider" id="401"><left>35</left><top>25</top><width>1690</width><height>34</height><texturesliderbar colordiffuse="NoiroBackground">white.svg</texturesliderbar><texturesliderbarfocus colordiffuse="NoiroBackground">white.svg</texturesliderbarfocus><textureslidernib colordiffuse="NoiroAccent">white.svg</textureslidernib><textureslidernibfocus colordiffuse="NoiroAccent">white.svg</textureslidernibfocus></control>
+      <control type="label"><left>35</left><top>64</top><width>500</width><height>42</height><font>font12</font><textcolor>NoiroText</textcolor><label>$INFO[Player.Time]</label></control>
+      <control type="label"><right>35</right><top>64</top><width>500</width><height>42</height><align>right</align><font>font12</font><textcolor>NoiroText</textcolor><label>$INFO[Player.Duration]</label></control>
+    </control>
+  </controls>
+</window>
