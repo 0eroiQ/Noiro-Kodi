@@ -133,7 +133,7 @@ class NoiroBackend(object):
         return {
             "ready": profile_store,
             "protocol": 1,
-            "service": "0.2.1",
+            "service": "0.2.2",
             "profile_store": profile_store,
             "profile_count": len(self.profiles.list()),
             "maintenance_mode": bool(state.get("maintenance_mode")),

@@ -64,5 +64,5 @@ build instructions, license notices and artifact checksums.
 commit recorded in `native/upstream-core.json`, so the corresponding-source
 archive does not depend on a future GitHub checkout remaining available.
 
-Version 0.2.1 is an installable alpha. Automated checks and the armhf ABI gate
+Version 0.2.2 is an installable alpha. Automated checks and the armhf ABI gate
 are complete; the physical Vero acceptance checklist remains a separate gate.

@@ -30,7 +30,7 @@ class GitHubReleaseClient(object):
         headers = {
             "Accept": accept,
             "X-GitHub-Api-Version": "2022-11-28",
-            "User-Agent": "Noiro-Kodi/0.2.1",
+            "User-Agent": "Noiro-Kodi/0.2.2",
         }
         if self.token:
             headers["Authorization"] = "Bearer %s" % self.token
@@ -51,8 +51,15 @@ class GitHubReleaseClient(object):
     def load_latest(self, force=False):
         if self.release and self.manifest and not force:
             return self.manifest
-        manifest_bytes = self._request(self.LATEST + "/release-manifest.json", accept="application/octet-stream")
-        signature_text = self._request(self.LATEST + "/release-manifest.sig", accept="application/octet-stream").strip()
+        cache_buster = "?noiro=" + str(int(time.time()))
+        manifest_bytes = self._request(
+            self.LATEST + "/release-manifest.json" + cache_buster,
+            accept="application/octet-stream",
+        )
+        signature_text = self._request(
+            self.LATEST + "/release-manifest.sig" + cache_buster,
+            accept="application/octet-stream",
+        ).strip()
         try:
             signature = base64.b64decode(signature_text, validate=True)
             with open(self.public_key_path, "r", encoding="utf-8") as handle:
