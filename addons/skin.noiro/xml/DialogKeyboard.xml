@@ -4,6 +4,7 @@
 	<include>Keyboard_Slide_Up</include>
 	<depth>DepthDialog+</depth>
 	<controls>
+		<include>NoiroBackground</include>
 		<control type="group">
 			<bottom>0</bottom>
 			<centerleft>50%</centerleft>
@@ -14,22 +15,16 @@
 				<left>0</left>
 				<bottom>0</bottom>
 				<width>100%</width>
-				<height>300%</height>
-				<texture flipy="true">frame/osdfade.png</texture>
-			</control>
-			<control type="image">
-				<left>0</left>
-				<bottom>0</bottom>
-				<width>100%</width>
 				<height>470</height>
-				<texture colordiffuse="dialog_tint">colors/white.png</texture>
+				<texture colordiffuse="NoiroChrome">colors/white.png</texture>
 			</control>
 			<control type="label" id="311">
 				<centerleft>50%</centerleft>
 				<top>50</top>
 				<width>1542</width>
 				<height>100</height>
-				<font>font45</font>
+				<font>fontNoiroHero</font>
+				<textcolor>NoiroText</textcolor>
 				<label>$PARAM[header_label]</label>
 				<align>center</align>
 				<aligny>center</aligny>
@@ -40,21 +35,22 @@
 				<top>184</top>
 				<width>1542</width>
 				<height>100</height>
-				<texture colordiffuse="dialog_tint">colors/white.png</texture>
+				<texture colordiffuse="NoiroPanel">colors/white.png</texture>
 			</control>
 			<control type="image">
 				<centerleft>50%</centerleft>
 				<top>184</top>
 				<width>1542</width>
 				<height>100</height>
-				<texture border="40">buttons/button-alt-nofo.png</texture>
+				<texture border="40" colordiffuse="NoiroSurfaceFocus">buttons/button-alt-nofo.png</texture>
 			</control>
 			<control type="edit" id="312">
 				<centerleft>50%</centerleft>
 				<top>183</top>
 				<width>1510</width>
 				<height>100</height>
-				<font>font37</font>
+				<font>fontNoiroRail</font>
+				<textcolor>NoiroText</textcolor>
 				<align>center</align>
 				<aligny>center</aligny>
 				<texturefocus />
@@ -599,7 +595,7 @@
 						<top>0</top>
 						<width>480</width>
 						<height>50</height>
-						<texture colordiffuse="dialog_tint">colors/white.png</texture>
+						<texture colordiffuse="NoiroPanel">colors/white.png</texture>
 					</control>
 					<control type="label">
 						<textoffsetx>30</textoffsetx>
@@ -619,13 +615,13 @@
 							<top>0</top>
 							<width>480</width>
 							<height>50</height>
-							<texture colordiffuse="dialog_tint">colors/white.png</texture>
+							<texture colordiffuse="NoiroPanel">colors/white.png</texture>
 						</control>
 						<control type="image">
 							<left>10</left>
 							<width>480</width>
 							<height>50</height>
-							<texture colordiffuse="button_focus">colors/grey.png</texture>
+							<texture colordiffuse="NoiroSurfaceFocus">colors/grey.png</texture>
 							<include>Animation_FocusTextureFade</include>
 						</control>
 						<control type="label">

@@ -128,6 +128,15 @@ class PublicRepositoryTests(unittest.TestCase):
         for optional_helper in ("script.embuary", "script.cinemavision", "script.skin.helper"):
             self.assertNotIn(optional_helper, details)
 
+    def test_search_keyboard_uses_noiro_shell_without_losing_native_keys(self):
+        keyboard = (ROOT / "addons/skin.noiro/xml/DialogKeyboard.xml").read_text(encoding="utf-8")
+        buttons = (ROOT / "addons/skin.noiro/xml/Includes_Buttons.xml").read_text(encoding="utf-8")
+        self.assertIn("<include>NoiroBackground</include>", keyboard)
+        self.assertIn('<param name="id" value="300"', keyboard)
+        self.assertIn('<param name="id" value="301"', keyboard)
+        self.assertIn('name="KeyboardButton"', buttons)
+        self.assertIn("NoiroAccent", buttons.split('name="KeyboardButton"', 1)[1].split("</include>", 1)[0])
+
     def test_home_widgets_wait_for_service_during_cold_boot(self):
         plugin = (ROOT / "addons/plugin.video.noiro/addon.py").read_text(encoding="utf-8")
         self.assertIn("TRANSIENT_RPC_MARKERS", plugin)

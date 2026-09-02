@@ -158,11 +158,13 @@
 		<width>120</width>
 		<height>120</height>
 		<textoffsety>27</textoffsety>
-		<texturefocus colordiffuse="button_focus">buttons/roundbutton-fo.png</texturefocus>
-		<texturenofocus />
+		<texturefocus colordiffuse="NoiroAccent">buttons/roundbutton-fo.png</texturefocus>
+		<texturenofocus colordiffuse="NoiroPanel">buttons/roundbutton-fo.png</texturenofocus>
+		<textcolor>NoiroTextSecondary</textcolor>
+		<focusedcolor>NoiroText</focusedcolor>
 		<align>center</align>
 		<aligny>top</aligny>
-		<font>font45</font>
+		<font>fontNoiroRail</font>
 	</include>
 	<include name="PlaylistWindowButton">
 		<param name="width">100%</param>
