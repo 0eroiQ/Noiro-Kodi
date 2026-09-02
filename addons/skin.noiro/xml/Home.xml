@@ -1,25 +1,135 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <window>
-  <defaultcontrol always="true">9000</defaultcontrol>
-  <onload>SetProperty(Noiro.SkinHeartbeat,1,home)</onload>
-  <onunload>ClearProperty(Noiro.SkinHeartbeat,home)</onunload>
-  <controls>
-    <include>NoiroBackground</include>
-    <include>NoiroHeader</include>
-    <control type="label">
-      <left>90</left><top>230</top><width>1200</width><height>130</height>
-      <font>fontHero</font><textcolor>NoiroText</textcolor><label>What do you want to watch?</label>
-    </control>
-    <control type="grouplist" id="9000">
-      <left>90</left><top>430</top><width>700</width><height>480</height><orientation>vertical</orientation><itemgap>18</itemgap>
-      <control type="button" id="9001"><include>NoiroButton</include><label>Open NoiroTV</label><onclick>ActivateWindow(Videos,plugin://plugin.video.noiro/,return)</onclick></control>
-      <control type="button" id="9002"><include>NoiroButton</include><label>Switch profile</label><onclick>RunAddon(script.noiro.setup,?action=profiles)</onclick></control>
-      <control type="button" id="9003"><include>NoiroButton</include><label>Search</label><onclick>ActivateWindow(Videos,plugin://plugin.video.noiro/?action=search,return)</onclick></control>
-      <control type="button" id="9004"><include>NoiroButton</include><label>Settings</label><onclick>RunAddon(script.noiro.setup,?action=settings)</onclick></control>
-    </control>
-    <control type="label">
-      <right>95</right><bottom>65</bottom><width>900</width><height>55</height>
-      <align>right</align><font>font12</font><textcolor>NoiroMuted</textcolor><label>OSMC + Kodi playback · Noiro experience</label>
-    </control>
-  </controls>
+	<defaultcontrol always="true">5200</defaultcontrol>
+	<onload>SetProperty(Noiro.SkinHeartbeat,1,home)</onload>
+	<onunload>ClearProperty(Noiro.SkinHeartbeat,home)</onunload>
+	<controls>
+		<include>NoiroBackground</include>
+
+		<!-- The focused card becomes the living Apple-TV-style hero. Artwork is
+		     deliberately display-only: Kodi remains the sole playback engine. -->
+		<control type="image">
+			<left>700</left><top>0</top><width>1220</width><height>620</height>
+			<texture background="true">$VAR[NoiroHeroFanart]</texture>
+			<aspectratio align="right" aligny="top">scale</aspectratio>
+			<fadetime>350</fadetime>
+		</control>
+		<control type="image">
+			<left>0</left><top>0</top><width>970</width><height>640</height>
+			<texture colordiffuse="NoiroHeroShade">colors/white.png</texture>
+		</control>
+		<control type="image">
+			<left>0</left><top>520</top><width>1920</width><height>560</height>
+			<texture colordiffuse="NoiroChrome">colors/white.png</texture>
+		</control>
+
+		<!-- Product chrome: Noiro is the only everyday interface. OSMC and the
+		     support add-ons remain available only through PIN Maintenance. -->
+		<control type="label">
+			<left>82</left><top>48</top><width>260</width><height>64</height>
+			<font>fontNoiroWordmark</font><textcolor>NoiroText</textcolor><label>NOIRO</label>
+		</control>
+		<control type="grouplist" id="9000">
+			<left>355</left><top>43</top><width>1110</width><height>72</height>
+			<orientation>horizontal</orientation><itemgap>4</itemgap>
+			<onup>9000</onup><ondown>5200</ondown>
+			<control type="button" id="9001">
+				<width>150</width><include>NoiroNavButton</include><label>Home</label>
+				<onclick>SetFocus(5200)</onclick>
+			</control>
+			<control type="button" id="9002">
+				<width>190</width><include>NoiroNavButton</include><label>Discover</label>
+				<onclick>ActivateWindow(Videos,plugin://plugin.video.noiro/,return)</onclick>
+			</control>
+			<control type="button" id="9003">
+				<width>165</width><include>NoiroNavButton</include><label>Library</label>
+				<onclick>ActivateWindow(Videos,plugin://plugin.video.noiro/?action=library,return)</onclick>
+			</control>
+			<control type="button" id="9004">
+				<width>155</width><include>NoiroNavButton</include><label>Search</label>
+				<onclick>ActivateWindow(Videos,plugin://plugin.video.noiro/?action=search,return)</onclick>
+			</control>
+			<control type="button" id="9005">
+				<width>175</width><include>NoiroNavButton</include><label>Profiles</label>
+				<onclick>RunAddon(script.noiro.setup,?action=profiles)</onclick>
+			</control>
+			<control type="button" id="9006">
+				<width>170</width><include>NoiroNavButton</include><label>Settings</label>
+				<onclick>RunAddon(script.noiro.setup,?action=settings)</onclick>
+			</control>
+		</control>
+		<control type="label">
+			<right>82</right><top>57</top><width>330</width><height>52</height>
+			<align>right</align><font>fontNoiroMeta</font><textcolor>NoiroMuted</textcolor>
+			<label>$INFO[System.Time]</label>
+		</control>
+
+		<!-- Focused-title details mirror Noiro on Apple TV: editorial title,
+		     metadata, short synopsis, then the active collection. -->
+		<control type="label">
+			<left>86</left><top>176</top><width>760</width><height>92</height>
+			<font>fontNoiroHero</font><textcolor>NoiroText</textcolor>
+			<label>$VAR[NoiroHeroTitle]</label><scroll>false</scroll>
+		</control>
+		<control type="label">
+			<left>90</left><top>276</top><width>720</width><height>44</height>
+			<font>fontNoiroMeta</font><textcolor>NoiroAccentBright</textcolor>
+			<label>$VAR[NoiroHeroMeta]</label>
+		</control>
+		<control type="textbox">
+			<left>88</left><top>330</top><width>720</width><height>128</height>
+			<font>fontNoiroBody</font><textcolor>NoiroTextSecondary</textcolor>
+			<label>$VAR[NoiroHeroPlot]</label><autoscroll>false</autoscroll>
+		</control>
+		<control type="label">
+			<left>90</left><top>470</top><width>720</width><height>42</height>
+			<font>fontNoiroEyebrow</font><textcolor>NoiroMuted</textcolor>
+			<label>$VAR[NoiroHeroCollection]</label>
+		</control>
+
+		<!-- One complete rail plus the next title peeks into view, matching the
+		     focus rhythm of the native tvOS Home. The grouplist scrolls vertically
+		     while every rail itself remains horizontal. -->
+		<control type="grouplist" id="5000">
+			<left>0</left><top>548</top><width>1920</width><height>532</height>
+			<orientation>vertical</orientation><itemgap>8</itemgap>
+			<scrolltime tween="cubic" easing="out">420</scrolltime>
+			<usecontrolcoords>true</usecontrolcoords>
+			<include content="NoiroHomeRail">
+				<param name="group_id" value="5201"/>
+				<param name="list_id" value="5200"/>
+				<param name="header" value="Featured"/>
+				<param name="content" value="plugin://plugin.video.noiro/?action=widget_featured"/>
+				<param name="onup" value="9000"/><param name="ondown" value="5100"/>
+			</include>
+			<include content="NoiroHomeRail">
+				<param name="group_id" value="5101"/>
+				<param name="list_id" value="5100"/>
+				<param name="header" value="Continue Watching"/>
+				<param name="content" value="plugin://plugin.video.noiro/?action=widget_continue"/>
+				<param name="onup" value="5200"/><param name="ondown" value="5300"/>
+			</include>
+			<include content="NoiroHomeRail">
+				<param name="group_id" value="5301"/>
+				<param name="list_id" value="5300"/>
+				<param name="header" value="$INFO[Container(5300).ListItem.Property(Noiro.Collection)]"/>
+				<param name="content" value="plugin://plugin.video.noiro/?action=widget_catalog&amp;slot=0"/>
+				<param name="onup" value="5100"/><param name="ondown" value="5400"/>
+			</include>
+			<include content="NoiroHomeRail">
+				<param name="group_id" value="5401"/>
+				<param name="list_id" value="5400"/>
+				<param name="header" value="$INFO[Container(5400).ListItem.Property(Noiro.Collection)]"/>
+				<param name="content" value="plugin://plugin.video.noiro/?action=widget_catalog&amp;slot=1"/>
+				<param name="onup" value="5300"/><param name="ondown" value="5500"/>
+			</include>
+			<include content="NoiroHomeRail">
+				<param name="group_id" value="5501"/>
+				<param name="list_id" value="5500"/>
+				<param name="header" value="My Library"/>
+				<param name="content" value="plugin://plugin.video.noiro/?action=widget_library"/>
+				<param name="onup" value="5400"/><param name="ondown" value="5500"/>
+			</include>
+		</control>
+	</controls>
 </window>

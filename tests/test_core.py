@@ -27,6 +27,7 @@ class FakeStremio(object):
         self.link_reads = 0
         self.collections = {}
         self.progress = []
+        self.catalog_calls = 0
 
     def create_link(self):
         return LinkSession("ABC123", "https://link.example/ABC123", "", time.time() + 300)
@@ -50,6 +51,7 @@ class FakeStremio(object):
         return {"transportUrl": url, "manifest": {"id": "example.addon", "name": "Example", "resources": ["stream"]}}
 
     def catalogs(self, addons, extras=None):
+        self.catalog_calls += 1
         return [{"catalogId": "top", "metas": [{"id": "tt1", "name": "Movie", "type": "movie"}]}]
 
     def search(self, addons, query):
@@ -301,6 +303,26 @@ class CoreTests(unittest.TestCase):
         rows = self.backend.dispatch("stremio.continue", {"profile_id": profile["id"]})
         self.assertEqual(rows[0]["name"], "viewer-token")
         self.assertEqual(rows[0]["resume_position_ms"], 20000)
+
+    def test_home_widget_catalog_requests_share_short_profile_cache(self):
+        profile = self.backend.dispatch("profiles.create", {"name": "Viewer"})
+        self.backend.profiles.set_auth_key(profile["id"], "viewer-token")
+        first = self.backend.dispatch("stremio.catalogs", {"profile_id": profile["id"]})
+        second = self.backend.dispatch("stremio.catalogs", {"profile_id": profile["id"]})
+        self.assertEqual(first, second)
+        self.assertEqual(self.fake.catalog_calls, 1)
+
+    def test_addon_change_invalidates_home_widget_catalog_cache(self):
+        profile = self.backend.dispatch("profiles.create", {"name": "Viewer"})
+        self.backend.profiles.set_auth_key(profile["id"], "viewer-token")
+        self.backend.dispatch("stremio.catalogs", {"profile_id": profile["id"]})
+        self.backend.dispatch("stremio.addons.install", {
+            "profile_id": profile["id"],
+            "manifest_url": "https://new/manifest.json",
+            "confirmed": True,
+        })
+        self.backend.dispatch("stremio.catalogs", {"profile_id": profile["id"]})
+        self.assertEqual(self.fake.catalog_calls, 2)
 
     def test_gemini_failure_is_fail_soft(self):
         def broken(_request, timeout=None):

@@ -14,10 +14,30 @@ BASE = sys.argv[0]
 HANDLE = int(sys.argv[1])
 RPC = JsonRpcClient(socket_path())
 DIALOG = xbmcgui.Dialog()
+TRANSIENT_RPC_MARKERS = (
+    "no such file or directory",
+    "connection refused",
+    "connection reset",
+    "timed out",
+    "temporarily unavailable",
+)
 
 
 def request(method, params=None):
-    return RPC.call(method, params or {})
+    """Wait briefly for the Noiro service during Kodi's cold-start race.
+
+    Kodi can evaluate Home widget paths before Python add-on services have
+    finished starting.  A bounded retry keeps those first widget requests
+    alive without hiding real Stremio or application errors.
+    """
+    for attempt in range(61):
+        try:
+            return RPC.call(method, params or {})
+        except RpcError as error:
+            transient = any(marker in str(error).lower() for marker in TRANSIENT_RPC_MARKERS)
+            if not transient or attempt == 60:
+                raise
+            xbmc.sleep(250)
 
 
 def url(action, **params):
@@ -31,7 +51,7 @@ def query():
     return {key: items[-1] for key, items in value.items()}
 
 
-def list_item(label, path, folder=True, art=None, info=None, playable=False, context=None):
+def list_item(label, path, folder=True, art=None, info=None, playable=False, context=None, properties=None):
     item = xbmcgui.ListItem(label=label)
     if art:
         item.setArt(art)
@@ -41,14 +61,21 @@ def list_item(label, path, folder=True, art=None, info=None, playable=False, con
         item.setProperty("IsPlayable", "true")
     if context:
         item.addContextMenuItems(context)
+    for key, value in (properties or {}).items():
+        if value is not None:
+            item.setProperty(str(key), str(value))
     xbmcplugin.addDirectoryItem(HANDLE, path, item, isFolder=folder)
 
 
 def meta_art(meta):
+    background = meta.get("background") or meta.get("poster") or ""
     return {
-        "thumb": meta.get("poster") or meta.get("background") or "",
+        "thumb": meta.get("poster") or background,
         "poster": meta.get("poster") or "",
-        "fanart": meta.get("background") or meta.get("poster") or "",
+        "fanart": background,
+        "landscape": background,
+        "banner": background,
+        "clearlogo": meta.get("logo") or "",
     }
 
 
@@ -63,11 +90,19 @@ def meta_info(meta):
     }
 
 
-def add_meta(meta, resume_position_ms=None, resume_duration_ms=None):
+def add_meta(meta, resume_position_ms=None, resume_duration_ms=None, properties=None):
     content_type = meta.get("type") or "movie"
     item_id = meta.get("id")
     if not item_id:
         return
+    values = dict(properties or {})
+    values["Noiro.Type"] = content_type
+    position = float(resume_position_ms or 0)
+    duration = float(resume_duration_ms or 0)
+    if position > 0 and duration > 0:
+        values["ResumeTime"] = position / 1000.0
+        values["TotalTime"] = duration / 1000.0
+        values["Noiro.Progress"] = max(0.0, min(100.0, position * 100.0 / duration))
     list_item(
         meta.get("name") or item_id,
         url(
@@ -80,7 +115,58 @@ def add_meta(meta, resume_position_ms=None, resume_duration_ms=None):
         folder=True,
         art=meta_art(meta),
         info=meta_info(meta),
+        properties=values,
     )
+
+
+def collection_name(row):
+    catalog = row.get("catalogName") or "Catalog"
+    addon = row.get("addonName") or "Stremio"
+    return "%s · %s" % (catalog, addon)
+
+
+def widget_featured():
+    """Blend the active profile's catalog rails into one hero/featured feed.
+
+    Round-robin order prevents the first installed add-on from occupying the
+    entire shelf while keeping the user's real Stremio add-on order intact.
+    """
+    rows = [row for row in request("stremio.catalogs") if row.get("metas")]
+    seen = set()
+    added = 0
+    depth = max([len(row.get("metas") or []) for row in rows] or [0])
+    for index in range(depth):
+        for row in rows:
+            metas = row.get("metas") or []
+            if index >= len(metas):
+                continue
+            meta = metas[index]
+            identity = (meta.get("type"), meta.get("id"))
+            if not identity[1] or identity in seen:
+                continue
+            seen.add(identity)
+            add_meta(meta, properties={"Noiro.Collection": collection_name(row)})
+            added += 1
+            if added >= 36:
+                break
+        if added >= 36:
+            break
+    xbmcplugin.setPluginCategory(HANDLE, "Featured")
+    xbmcplugin.setContent(HANDLE, "movies")
+    xbmcplugin.endOfDirectory(HANDLE, cacheToDisc=False)
+
+
+def widget_catalog(values):
+    rows = [row for row in request("stremio.catalogs") if row.get("metas")]
+    slot = max(0, int(values.get("slot") or 0))
+    if slot < len(rows):
+        row = rows[slot]
+        label = collection_name(row)
+        for meta in row.get("metas") or []:
+            add_meta(meta, properties={"Noiro.Collection": label})
+        xbmcplugin.setPluginCategory(HANDLE, label)
+    xbmcplugin.setContent(HANDLE, "movies")
+    xbmcplugin.endOfDirectory(HANDLE, cacheToDisc=False)
 
 
 def active_profile():
@@ -152,6 +238,19 @@ def library():
     xbmcplugin.endOfDirectory(HANDLE)
 
 
+def widget_library():
+    for item in request("stremio.library"):
+        if item.get("removed"):
+            continue
+        meta = dict(item)
+        meta.setdefault("id", item.get("_id"))
+        meta.setdefault("name", item.get("name"))
+        add_meta(meta, properties={"Noiro.Collection": "My Library"})
+    xbmcplugin.setPluginCategory(HANDLE, "My Library")
+    xbmcplugin.setContent(HANDLE, "videos")
+    xbmcplugin.endOfDirectory(HANDLE, cacheToDisc=False)
+
+
 def continue_watching():
     for item in request("stremio.continue"):
         meta = dict(item)
@@ -170,12 +269,30 @@ def continue_watching():
                 folder=True,
                 art=meta_art(meta),
                 info=meta_info(meta),
+                properties={
+                    "Noiro.Collection": "Continue Watching",
+                    "ResumeTime": float(item.get("resume_position_ms") or 0) / 1000.0,
+                    "TotalTime": float(item.get("resume_duration_ms") or 0) / 1000.0,
+                    "Noiro.Progress": (
+                        float(item.get("resume_position_ms") or 0) * 100.0
+                        / max(1.0, float(item.get("resume_duration_ms") or 0))
+                    ),
+                },
             )
         else:
-            add_meta(meta, item.get("resume_position_ms"), item.get("resume_duration_ms"))
+            add_meta(
+                meta,
+                item.get("resume_position_ms"),
+                item.get("resume_duration_ms"),
+                properties={"Noiro.Collection": "Continue Watching"},
+            )
     xbmcplugin.setPluginCategory(HANDLE, "Continue Watching")
     xbmcplugin.setContent(HANDLE, "videos")
     xbmcplugin.endOfDirectory(HANDLE)
+
+
+def widget_continue_watching():
+    continue_watching()
 
 
 def details(values):
@@ -344,6 +461,10 @@ def main():
         "search": lambda: search(),
         "library": lambda: library(),
         "continue": lambda: continue_watching(),
+        "widget_featured": lambda: widget_featured(),
+        "widget_catalog": lambda: widget_catalog(values),
+        "widget_continue": lambda: widget_continue_watching(),
+        "widget_library": lambda: widget_library(),
         "details": lambda: details(values),
         "play": lambda: play(values),
         "sources": lambda: sources(values),
@@ -358,6 +479,10 @@ def main():
     try:
         routes.get(action, routes["home"])()
     except RpcError as error:
+        if action.startswith("widget_"):
+            xbmc.log("Noiro home widget unavailable: %s" % error, xbmc.LOGWARNING)
+            xbmcplugin.endOfDirectory(HANDLE, succeeded=False, cacheToDisc=False)
+            return
         DIALOG.ok("NoiroTV", str(error))
         if action.startswith("play"):
             xbmcplugin.setResolvedUrl(HANDLE, False, xbmcgui.ListItem())

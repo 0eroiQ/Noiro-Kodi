@@ -1802,4 +1802,115 @@
 			<label>$INFO[ListItem.Label]</label>
 		</control>
 	</include>
+	<include name="NoiroNavButton">
+		<height>66</height><font>fontNoiroNav</font>
+		<align>center</align><aligny>center</aligny>
+		<textcolor>NoiroMuted</textcolor><focusedcolor>NoiroText</focusedcolor>
+		<texturefocus border="24" colordiffuse="NoiroSurfaceFocus">buttons/dialogbutton-nofo.png</texturefocus>
+		<texturenofocus border="24" colordiffuse="NoiroTransparent">buttons/dialogbutton-nofo.png</texturenofocus>
+	</include>
+
+	<!-- The hero follows whichever Home rail owns focus. When focus is in the
+	     top navigation, Featured remains the stable background. -->
+	<variable name="NoiroHeroFanart">
+		<value condition="Control.HasFocus(5100)">$INFO[Container(5100).ListItem.Art(fanart)]</value>
+		<value condition="Control.HasFocus(5300)">$INFO[Container(5300).ListItem.Art(fanart)]</value>
+		<value condition="Control.HasFocus(5400)">$INFO[Container(5400).ListItem.Art(fanart)]</value>
+		<value condition="Control.HasFocus(5500)">$INFO[Container(5500).ListItem.Art(fanart)]</value>
+		<value>$INFO[Container(5200).ListItem.Art(fanart)]</value>
+	</variable>
+	<variable name="NoiroHeroTitle">
+		<value condition="Control.HasFocus(5100)">$INFO[Container(5100).ListItem.Title]</value>
+		<value condition="Control.HasFocus(5300)">$INFO[Container(5300).ListItem.Title]</value>
+		<value condition="Control.HasFocus(5400)">$INFO[Container(5400).ListItem.Title]</value>
+		<value condition="Control.HasFocus(5500)">$INFO[Container(5500).ListItem.Title]</value>
+		<value condition="!String.IsEmpty(Container(5200).ListItem.Title)">$INFO[Container(5200).ListItem.Title]</value>
+		<value>Welcome to NoiroTV</value>
+	</variable>
+	<variable name="NoiroHeroPlot">
+		<value condition="Control.HasFocus(5100)">$INFO[Container(5100).ListItem.Plot]</value>
+		<value condition="Control.HasFocus(5300)">$INFO[Container(5300).ListItem.Plot]</value>
+		<value condition="Control.HasFocus(5400)">$INFO[Container(5400).ListItem.Plot]</value>
+		<value condition="Control.HasFocus(5500)">$INFO[Container(5500).ListItem.Plot]</value>
+		<value condition="!String.IsEmpty(Container(5200).ListItem.Plot)">$INFO[Container(5200).ListItem.Plot]</value>
+		<value>Your Stremio catalogs, library and progress in one private TV experience.</value>
+	</variable>
+	<variable name="NoiroHeroMeta">
+		<value condition="Control.HasFocus(5100)">$INFO[Container(5100).ListItem.Year]$INFO[Container(5100).ListItem.Genre,  ·  ]$INFO[Container(5100).ListItem.Rating,  ·  ★ ]</value>
+		<value condition="Control.HasFocus(5300)">$INFO[Container(5300).ListItem.Year]$INFO[Container(5300).ListItem.Genre,  ·  ]$INFO[Container(5300).ListItem.Rating,  ·  ★ ]</value>
+		<value condition="Control.HasFocus(5400)">$INFO[Container(5400).ListItem.Year]$INFO[Container(5400).ListItem.Genre,  ·  ]$INFO[Container(5400).ListItem.Rating,  ·  ★ ]</value>
+		<value condition="Control.HasFocus(5500)">$INFO[Container(5500).ListItem.Year]$INFO[Container(5500).ListItem.Genre,  ·  ]$INFO[Container(5500).ListItem.Rating,  ·  ★ ]</value>
+		<value>$INFO[Container(5200).ListItem.Year]$INFO[Container(5200).ListItem.Genre,  ·  ]$INFO[Container(5200).ListItem.Rating,  ·  ★ ]</value>
+	</variable>
+	<variable name="NoiroHeroCollection">
+		<value condition="Control.HasFocus(5100)">$INFO[Container(5100).ListItem.Property(Noiro.Collection)]</value>
+		<value condition="Control.HasFocus(5300)">$INFO[Container(5300).ListItem.Property(Noiro.Collection)]</value>
+		<value condition="Control.HasFocus(5400)">$INFO[Container(5400).ListItem.Property(Noiro.Collection)]</value>
+		<value condition="Control.HasFocus(5500)">$INFO[Container(5500).ListItem.Property(Noiro.Collection)]</value>
+		<value>$INFO[Container(5200).ListItem.Property(Noiro.Collection)]</value>
+	</variable>
+
+	<include name="NoiroHomeCard">
+		<param name="focused">false</param>
+		<definition>
+			<control type="group">
+				<left>12</left><top>8</top><width>226</width><height>370</height>
+				<animation type="Focus" condition="$PARAM[focused]">
+					<effect type="zoom" start="100" end="108" time="210" tween="sine" easing="inout" center="113,168"/>
+				</animation>
+				<animation type="Unfocus" condition="$PARAM[focused]">
+					<effect type="zoom" start="108" end="100" time="180" tween="sine" easing="inout" center="113,168"/>
+				</animation>
+				<control type="image">
+					<left>-6</left><top>-6</top><width>232</width><height>334</height>
+					<texture border="14" colordiffuse="NoiroAccent">buttons/thumbnail_focused.png</texture>
+					<visible>$PARAM[focused]</visible>
+				</control>
+				<control type="image">
+					<left>0</left><top>0</top><width>220</width><height>322</height>
+					<texture background="true" fallback="DefaultVideo.png">$INFO[ListItem.Art(poster)]</texture>
+					<aspectratio align="center" aligny="center">scale</aspectratio>
+				</control>
+				<control type="progress">
+					<left>0</left><top>316</top><width>220</width><height>6</height>
+					<texturebg></texturebg>
+					<midtexture colordiffuse="NoiroAccent" border="3">progress/texturebg_alt_white.png</midtexture>
+					<info>ListItem.PercentPlayed</info>
+					<visible>!Integer.IsEqual(ListItem.PercentPlayed,0)</visible>
+				</control>
+				<control type="label">
+					<left>0</left><top>330</top><width>220</width><height>40</height>
+					<font>fontNoiroCard</font><textcolor>NoiroText</textcolor>
+					<label>$INFO[ListItem.Title]</label><scroll>$PARAM[focused]</scroll>
+				</control>
+			</control>
+		</definition>
+	</include>
+
+	<include name="NoiroHomeRail">
+		<definition>
+			<control type="group" id="$PARAM[group_id]">
+				<width>1920</width><height>430</height>
+				<visible>Integer.IsGreater(Container($PARAM[list_id]).NumItems,0) | Container($PARAM[list_id]).IsUpdating</visible>
+				<control type="label">
+					<left>86</left><top>5</top><width>1300</width><height>52</height>
+					<font>fontNoiroRail</font><textcolor>NoiroText</textcolor><label>$PARAM[header]</label>
+				</control>
+				<control type="panel" id="$PARAM[list_id]">
+					<left>68</left><top>56</top><width>1852</width><height>374</height>
+					<orientation>horizontal</orientation><preloaditems>2</preloaditems>
+					<scrolltime tween="cubic" easing="out">320</scrolltime>
+					<onleft>$PARAM[list_id]</onleft><onright>$PARAM[list_id]</onright>
+					<onup>$PARAM[onup]</onup><ondown>$PARAM[ondown]</ondown>
+					<itemlayout width="248" height="374">
+						<include content="NoiroHomeCard"><param name="focused" value="false"/></include>
+					</itemlayout>
+					<focusedlayout width="248" height="374">
+						<include content="NoiroHomeCard"><param name="focused" value="true"/></include>
+					</focusedlayout>
+					<content target="videos" limit="24" browse="auto">$PARAM[content]</content>
+				</control>
+			</control>
+		</definition>
+	</include>
 </includes>

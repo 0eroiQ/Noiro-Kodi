@@ -108,6 +108,31 @@ class PublicRepositoryTests(unittest.TestCase):
         active_xml = "".join(path.read_text(encoding="utf-8") for path in (skin / "xml").glob("*.xml"))
         self.assertNotIn("white.svg", active_xml)
 
+    def test_skin_home_is_widget_first_and_hides_the_support_addon(self):
+        home = (ROOT / "addons/skin.noiro/xml/Home.xml").read_text(encoding="utf-8")
+        includes = (ROOT / "addons/skin.noiro/xml/Includes.xml").read_text(encoding="utf-8")
+        plugin = (ROOT / "addons/plugin.video.noiro/addon.py").read_text(encoding="utf-8")
+        self.assertNotIn("Open NoiroTV", home)
+        self.assertNotIn("<label>Add-ons</label>", home)
+        for route in ("widget_continue", "widget_featured", "widget_catalog", "widget_library"):
+            self.assertIn("action=%s" % route, home)
+            self.assertIn('"%s"' % route, plugin)
+        self.assertIn('name="NoiroHomeRail"', includes)
+        self.assertIn('name="NoiroHeroFanart"', includes)
+
+    def test_home_widgets_wait_for_service_during_cold_boot(self):
+        plugin = (ROOT / "addons/plugin.video.noiro/addon.py").read_text(encoding="utf-8")
+        self.assertIn("TRANSIENT_RPC_MARKERS", plugin)
+        self.assertIn('"no such file or directory"', plugin)
+        self.assertIn("xbmc.sleep(250)", plugin)
+        self.assertIn("attempt == 60", plugin)
+
+    def test_profile_selection_returns_to_integrated_noiro_home(self):
+        setup = (ROOT / "addons/script.noiro.setup/addon.py").read_text(encoding="utf-8")
+        profile_selection = setup.split("def select_profile", 1)[1].split("def open_osmc", 1)[0]
+        self.assertIn('activate("home")', profile_selection)
+        self.assertNotIn('activate("videos", "plugin://plugin.video.noiro/")', profile_selection)
+
     def test_skin_preference_update_preserves_other_kodi_settings(self):
         original = """<?xml version='1.0'?>
 <settings>

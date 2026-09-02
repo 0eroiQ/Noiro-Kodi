@@ -18,11 +18,17 @@
 	<color name="disabled">40FFFFFF</color>
 	<color name="selected">FFFFB70F</color>
 	<color name="invalid">FFFF0000</color>
-	<color name="NoiroBackground">FF080B12</color>
-	<color name="NoiroPanel">FF151A25</color>
-	<color name="NoiroPanelFocus">FF7567D8</color>
-	<color name="NoiroText">FFF5F4FA</color>
-	<color name="NoiroMuted">FFA8A5B3</color>
-	<color name="NoiroAccent">FFA594FF</color>
+	<color name="NoiroBackground">FF080A13</color>
+	<color name="NoiroPanel">FF161A27</color>
+	<color name="NoiroPanelFocus">FF4063FA</color>
+	<color name="NoiroText">FFF6F1E9</color>
+	<color name="NoiroTextSecondary">FFBCB1A1</color>
+	<color name="NoiroMuted">FF9E9485</color>
+	<color name="NoiroAccent">FF4063FA</color>
+	<color name="NoiroAccentBright">FFEB2EFA</color>
+	<color name="NoiroSurfaceFocus">EE30364A</color>
+	<color name="NoiroHeroShade">F2080A13</color>
+	<color name="NoiroChrome">F6080A13</color>
+	<color name="NoiroTransparent">00000000</color>
 	<color name="NoiroDanger">FFFF7474</color>
 </colors>

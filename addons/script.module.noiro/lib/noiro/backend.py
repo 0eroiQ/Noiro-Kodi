@@ -42,6 +42,11 @@ class NoiroBackend(object):
         self.subtitle_cache = SubtitleCache(os.path.join(self.data_dir, "subtitles"))
         self.subtitle_jobs = {}
         self.subtitle_jobs_lock = threading.Lock()
+        # Kodi asks for several Home shelves at the same time. Keep one short,
+        # profile-scoped catalog snapshot so those shelves do not repeat every
+        # Stremio add-on request independently during one screen paint.
+        self.catalog_cache = {}
+        self.catalog_cache_lock = threading.Lock()
 
     def _profile_and_key(self, params):
         profile_id = params.get("profile_id") or self.profiles.active_id()
@@ -133,7 +138,7 @@ class NoiroBackend(object):
         return {
             "ready": profile_store,
             "protocol": 1,
-            "service": "0.2.3",
+            "service": "0.3.0",
             "profile_store": profile_store,
             "profile_count": len(self.profiles.list()),
             "maintenance_mode": bool(state.get("maintenance_mode")),
@@ -316,6 +321,7 @@ class NoiroBackend(object):
         user = self.stremio.validate(token)
         self.profiles.set_auth_key(profile_id, token)
         self.profiles.update(profile_id, email=user.get("email"))
+        self._clear_catalog_cache(profile_id)
         self.link_sessions.pop(profile_id, None)
         return {"status": "linked", "user": {"email": user.get("email"), "_id": user.get("_id")}}
 
@@ -323,11 +329,31 @@ class NoiroBackend(object):
         profile_id = params.get("profile_id") or self.profiles.active_id()
         self.profiles.clear_auth_key(profile_id)
         self.link_sessions.pop(profile_id, None)
+        self._clear_catalog_cache(profile_id)
         return True
 
     def stremio_catalogs(self, params):
-        _profile, key = self._profile_and_key(params)
-        return self.stremio.catalogs(self._addons(key), params.get("extras"))
+        profile, key = self._profile_and_key(params)
+        extras = params.get("extras")
+        cache_key = (profile.id, json.dumps(extras or {}, sort_keys=True))
+        now = time.time()
+        with self.catalog_cache_lock:
+            cached = self.catalog_cache.get(cache_key)
+            if cached and now - cached[0] < 90:
+                return cached[1]
+            rows = self.stremio.catalogs(self._addons(key), extras)
+            self.catalog_cache[cache_key] = (now, rows)
+            return rows
+
+    def _clear_catalog_cache(self, profile_id=None):
+        with self.catalog_cache_lock:
+            if profile_id is None:
+                self.catalog_cache.clear()
+            else:
+                self.catalog_cache = {
+                    key: value for key, value in self.catalog_cache.items()
+                    if key[0] != profile_id
+                }
 
     def stremio_search(self, params):
         _profile, key = self._profile_and_key(params)
@@ -390,6 +416,7 @@ class NoiroBackend(object):
         updated = [item for item in current if (item.get("manifest") or {}).get("id") != addon_id]
         updated.append(descriptor)
         self.stremio.set_addons(key, updated)
+        self._clear_catalog_cache(profile.id)
         return updated
 
     def stremio_addons_remove(self, params):
@@ -400,6 +427,7 @@ class NoiroBackend(object):
         self._backup_addons(profile.id, current)
         updated = [item for item in current if (item.get("manifest") or {}).get("id") != params.get("addon_id")]
         self.stremio.set_addons(key, updated)
+        self._clear_catalog_cache(profile.id)
         return updated
 
     def stremio_addons_backups(self, params):
@@ -443,6 +471,7 @@ class NoiroBackend(object):
         current = self._addons(key)
         self._backup_addons(profile.id, current)
         self.stremio.set_addons(key, addons)
+        self._clear_catalog_cache(profile.id)
         return addons
 
     def subtitle_translate(self, params):

@@ -291,7 +291,10 @@ def select_profile(boot=False):
     if not profile.get("linked"):
         if not link_profile(profile["id"]):
             return
-    activate("videos", "plugin://plugin.video.noiro/")
+    # The video plug-in is an internal data/playback provider.  Selecting a
+    # profile must return to the integrated Noiro skin instead of exposing a
+    # Kodi add-on browser window to the viewer.
+    activate("home")
 
 
 def open_osmc():
